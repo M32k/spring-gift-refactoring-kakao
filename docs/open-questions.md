@@ -108,7 +108,7 @@
 
 ### 13. 관리자 화면(/admin/members)이 로그인 없이 열린다
 
-> 처음에는 C-3(AI 추정)이었고, 요청으로 확인해서 이 섹션으로 옮겼다. 충전, 수정, 삭제는 아직 확인하지 않아서 C-3에 AI 추정으로 남겼다.
+> 처음에는 C-3(AI 추정)이었고, 요청으로 확인해서 이 섹션으로 옮겼다. 회원 수정, 포인트 충전, 회원 삭제는 22번에 있다.
 
 - **작동**: 토큰이나 로그인 없이 `/admin/members`가 열린다. 4번에서 "관리자 화면에서만 볼 수 있다"고 한 회원 포인트도, 이 화면을 통해 누구나 볼 수 있다.
 - **확인한 방법**: 브라우저에서 토큰 없이 `/admin/members`에 접속하자 화면이 열렸다.
@@ -117,17 +117,31 @@
   - 프로젝트에 공통 인증 장치(Spring Security, 필터, 인터셉터)가 없다. 관리자 화면을 일부러 열어 뒀다는 주석도 없다.
 - **상태**: 미결정
 
-### 15. 카테고리 등록과 삭제가 로그인 토큰 없이 성공한다
+### 14. 선물 도착 메시지를 주문한 본인에게 보낸다
+
+> 처음에는 B 섹션(코드로만 확인)이었고, 요청으로 확인해서 이 섹션으로 옮겼다. 번호는 그대로 두었다.
+
+- **작동**: 주문하면 카카오 메시지가 "🎁 선물이 도착했어요!"라는 문구로 나간다. 그런데 받는 사람은 선물을 받을 사람이 아니라 주문한 회원 본인이다.
+- **확인한 방법**: 직접 확인함. 카카오 로그인으로 가입한 회원으로 주문했더니, 주문한 본인의 카카오톡에 "선물이 도착했어요" 메시지가 왔다.
+- **이유가 코드에 있는지**: 없음. 선물 문구를 본인에게 보내는 이유를 설명하는 주석은 없다.
+  - 메시지 문구는 받는 사람 입장의 선물 알림이다. `"🎁 선물이 도착했어요!"`(`src/main/java/gift/order/KakaoMessageClient.java:39`), 버튼 `"선물 확인하기"`(`:41`).
+  - 보내는 곳은 "나에게 보내기" API다. 메서드 이름이 `sendToMe`(`KakaoMessageClient.java:16`)이고, 주소가 `/v2/api/talk/memo/default/send`(`:23`)이다. 주문한 회원의 카카오 토큰으로 보낸다(`OrderController.java:110`).
+  - 주문을 만들 때 받는 사람 정보를 넘기지 않는다. `new Order(option, member.getId(), quantity, message)`(`OrderController.java:96`)
+  - 참고로 초기 주문 데이터의 메시지는 받는 사람에게 쓰는 말이다. 예: `'생일 축하해! 🎉'`, `'엄마 감사합니다 ❤️'`(`V2__Insert_default_data.sql:55,59`)
+- **상태**: 미결정 (본인 알림이 의도인지, 받는 사람에게 보내는 기능이 빠진 것인지 결정 필요)
+
+### 15. 카테고리 등록, 수정, 삭제가 로그인 토큰 없이 성공한다
 
 > 15–17번은 B 섹션 14번 다음 번호로 매겼다.
 
-- **작동**: `POST /api/categories`와 `DELETE /api/categories/{id}`를 `Authorization` 헤더 없이 보내도 성공한다. 등록은 201 Created, 삭제는 204 No Content가 오고, 실제로 반영된다.
+- **작동**: `POST /api/categories`, `PUT /api/categories/{id}`, `DELETE /api/categories/{id}`를 `Authorization` 헤더 없이 보내도 성공한다. 등록은 201 Created, 수정은 200 OK, 삭제는 204 No Content가 오고, 실제로 반영된다.
 - **확인한 방법**: 직접 curl로 확인함.
   - 등록: 토큰 없이 카테고리를 등록하자 201과 id 6이 왔다.
+  - 수정: 토큰 없이 `PUT`을 보내자 200이 왔다. 그 뒤 목록에 바뀐 이름이 나왔다.
   - 삭제: 토큰 없이 id 6을 삭제하자 204가 왔다. 그 뒤 목록에서 사라졌다.
   - 이전 확인에서 만든 테스트 카테고리 id 4도 토큰 없이 삭제했고, 204가 왔다. 지금 카테고리 목록에는 초기 데이터 id 1–3만 있다.
 - **이유가 코드에 있는지**: 없음.
-  - `CategoryController`의 등록 `createCategory`(`src/main/java/gift/category/CategoryController.java:34-39`)와 삭제 `deleteCategory`(`:56-60`)는 `Authorization` 헤더를 받지 않고 인증도 확인하지 않는다. 수정 `updateCategory`(`:41-54`)도 마찬가지지만, 요청으로는 확인하지 않았다.
+  - `CategoryController`의 등록 `createCategory`(`src/main/java/gift/category/CategoryController.java:34-39`), 수정 `updateCategory`(`:41-54`), 삭제 `deleteCategory`(`:56-60`)는 모두 `Authorization` 헤더를 받지 않고 인증도 확인하지 않는다.
   - 1번과 원인이 같다. 공통 인증 장치가 없고, 인증을 일부러 뺐다는 주석도 없다.
 - **상태**: 미결정
 
@@ -148,6 +162,65 @@
 - **이유가 코드에 있는지**: 없음.
   - `OptionController.deleteOption`(`OptionController.java:69-91`)은 `Authorization` 헤더를 받지 않고 인증도 확인하지 않는다.
   - 1번과 원인이 같다. 인증을 일부러 뺐다는 주석은 없다.
+- **상태**: 미결정
+
+### 18. 상품 수정이 로그인 토큰 없이 성공한다
+
+> 처음에는 C-1(AI 추정)이었고, 요청으로 확인해서 이 섹션으로 옮겼다.
+
+- **작동**: `PUT /api/products/{id}`를 `Authorization` 헤더 없이 보내도 200 OK가 오고, 상품이 실제로 수정된다.
+- **확인한 방법**: 직접 curl로 확인함. 토큰 없이 `PUT`을 보내자 200이 왔다. 그 뒤 다시 조회하자 바뀐 이름과 가격이 나왔다.
+- **이유가 코드에 있는지**: 없음.
+  - `ProductController.updateProduct`(`src/main/java/gift/product/ProductController.java:62-82`)는 `Authorization` 헤더를 받지 않고 인증도 확인하지 않는다.
+  - 1번, 11번과 원인이 같다. 인증을 일부러 뺐다는 주석은 없다.
+- **상태**: 미결정
+
+### 19. 관리자 화면에서 포인트를 0이나 음수로 충전하면 500이 온다
+
+- **작동**: 관리자 화면의 포인트 충전에 0이나 음수를 넣으면 500이 온다. 회원 포인트는 바뀌지 않는다. 양수(10000)는 정상적으로 충전되고 302로 목록에 돌아간다.
+- **확인한 방법**: 직접 curl로 확인함. 포인트 충전에 10000을 넣으면 302로 성공했다. 0과 -100을 넣으면 500이 왔고, 실패 뒤 포인트는 그대로였다.
+- **이유가 코드에 있는지**: 0 이하를 막는 규칙은 있지만, 500으로 응답하는 이유는 없다.
+  - 규칙: `Member.chargePoint`가 0 이하이면 `IllegalArgumentException("Amount must be greater than zero.")`를 던진다(`src/main/java/gift/member/Member.java:49-52`). 왜 0 이하를 막는지 설명하는 주석은 없다.
+  - 500인 이유: `AdminMemberController.chargePoint`(`src/main/java/gift/member/AdminMemberController.java:75-85`)에는 이 예외를 처리하는 코드가 없다. 컨트롤러에 `@ExceptionHandler`가 없고, 프로젝트에 `@ControllerAdvice`도 없다. 그래서 오류 메시지를 화면에 보여 주지 못하고 500이 된다. 같은 컨트롤러의 회원 등록은 오류를 화면에 보여 준다(`AdminMemberController.java:45-48`).
+  - 포인트가 그대로인 이유: 포인트를 더하기 전에 예외가 나서(`Member.java:50-53`), 그 뒤의 `memberRepository.save(member)`(`AdminMemberController.java:83`)까지 가지 않는다.
+- **상태**: 미결정
+
+### 20. 같은 "카카오" 상품명을 API는 막고 관리자 화면은 허용한다
+
+- **작동**: "카카오"가 들어간 상품명으로 등록하면, `POST /api/products`는 400을 돌려주지만 관리자 화면(`POST /admin/products`)은 등록에 성공한다. 관리자 화면에서는 "카카오" 이름을 유지한 채 수정해도 성공한다.
+- **확인한 방법**: API는 직접 curl로, 관리자 화면은 직접 브라우저로 확인함.
+  - API(curl): 400과 함께 "담당 MD와 협의한 경우에만" 메시지가 왔다.
+  - 관리자 화면(브라우저): 같은 이름으로 등록에 성공했다. "카카오" 이름을 유지한 채 수정해도 302가 왔고, 다시 조회하자 바뀐 값이 나왔다.
+- **이유가 코드에 있는지**: 부분적으로 있다.
+  - 막는 이유는 메시지에 있다: `"\"카카오\"가 포함된 상품명은 담당 MD와 협의한 경우에만 사용할 수 있습니다."`(`src/main/java/gift/product/ProductNameValidator.java:35-37`)
+  - 다르게 처리하는 코드: API는 `validate(name)`(`src/main/java/gift/product/ProductController.java:91`)를 호출하고, 이 메서드는 `allowKakao = false`로 검사한다(`ProductNameValidator.java:15-17`). 관리자 화면은 `validate(name, true)`로 허용한다(`src/main/java/gift/product/AdminProductController.java:47,80`).
+  - 관리자 화면이 "MD와 협의한 경우"에 해당한다는 설명은 코드에 없다. 관리자 화면에서 등록하면 협의를 거친 것으로 보는지는 확인이 필요하다.
+  - 참고: API의 상품 등록과 수정은 토큰 없이 된다(1번, 18번). `AdminProductController`에도 인증 확인 코드가 없다. 그래서 "카카오" 이름 말고는 API와 관리자 화면 사이에 권한 차이가 없을 것으로 보인다. 관리자 상품 화면이 로그인 없이 열리는지는 요청으로 확인하지 않았다.
+- **상태**: 미결정
+
+### 21. 관리자 화면에서 이미 삭제한 회원을 수정하면 404가 아니라 500이 온다
+
+- **작동**: 관리자 화면에서 이미 삭제한 회원 id로 수정 요청을 보내면 404가 아니라 500이 온다.
+- **확인한 방법**: 직접 curl로 확인함. 회원을 삭제한 뒤, 그 회원 id로 관리자 화면의 수정 요청을 보내자 500이 왔다.
+- **이유가 코드에 있는지**: 없음. 작동을 만드는 코드는 다음과 같다.
+  - `AdminMemberController.update`가 회원을 찾지 못하면 `IllegalArgumentException("Member not found. id=...")`를 던진다(`src/main/java/gift/member/AdminMemberController.java:68-69`).
+  - 이 컨트롤러에는 `@ExceptionHandler`가 없고, 프로젝트에 `@ControllerAdvice`도 없다. 그래서 404로 바뀌지 않고 500이 된다.
+  - 수정 화면 열기(`AdminMemberController.java:56-57`)와 포인트 충전(`:80-81`)도 같은 방식으로 회원을 찾는다. 그래서 없는 회원 id로 요청하면 똑같이 500이 될 것으로 보이지만, 요청으로는 확인하지 않았다.
+- **상태**: 미결정
+
+### 22. 관리자 화면의 회원 수정, 포인트 충전, 회원 삭제가 로그인 없이 성공한다
+
+> 처음에는 C-3(AI 추정)이었고, 요청으로 확인해서 이 섹션으로 옮겼다. 목록 화면이 열리는 것은 13번에 있다.
+
+- **작동**: 토큰이나 로그인 없이 관리자 화면의 회원 수정(`POST /admin/members/{id}/edit`), 포인트 충전(`POST /admin/members/{id}/charge-point`), 회원 삭제(`POST /admin/members/{id}/delete`) 요청을 보내도 302로 성공하고, 실제로 반영된다.
+- **확인한 방법**: 직접 curl로 확인함. 토큰과 로그인 없이 요청을 보냈다.
+  - 회원 수정: 302가 왔다. 그 뒤 목록에 바뀐 이메일이 나왔다.
+  - 포인트 충전: 10000을 넣자 302가 오고 충전되었다.
+  - 회원 삭제: 302가 왔다. 그 뒤 목록에서 사라졌다.
+- **이유가 코드에 있는지**: 없음.
+  - `AdminMemberController`의 수정(`src/main/java/gift/member/AdminMemberController.java:62-73`), 충전(`:75-85`), 삭제(`:87-91`)에는 인증이나 권한 확인이 없다.
+  - 13번과 원인이 같다. 공통 인증 장치가 없고, 관리자 기능을 일부러 열어 뒀다는 주석도 없다.
+  - 참고: 누구나 회원의 이메일과 비밀번호를 바꾸고, 포인트를 충전하고, 회원을 삭제할 수 있다.
 - **상태**: 미결정
 
 ---
@@ -181,18 +254,7 @@
   - 발송은 `KakaoMessageClient.sendToMe`(`src/main/java/gift/order/KakaoMessageClient.java:16-29`)에서 하고, 재시도는 없다.
 - **상태**: 미결정 (실패 무시는 정책으로 보이지만, 로그를 남길지는 결정 필요)
 
-### 14. 선물 도착 메시지를 주문한 본인에게 보낸다
-
-> 번호는 A 섹션의 11–13번 다음으로 매겼다.
-
-- **작동**: 주문하면 카카오 메시지가 "🎁 선물이 도착했어요!"라는 문구로 나간다. 그런데 받는 사람은 선물을 받을 사람이 아니라 주문한 회원 본인이다.
-- **확인한 방법**: 코드를 읽어 확인함.
-- **이유가 코드에 있는지**: 없음. 선물 문구를 본인에게 보내는 이유를 설명하는 주석은 없다.
-  - 메시지 문구는 받는 사람 입장의 선물 알림이다. `"🎁 선물이 도착했어요!"`(`src/main/java/gift/order/KakaoMessageClient.java:39`), 버튼 `"선물 확인하기"`(`:41`).
-  - 보내는 곳은 "나에게 보내기" API다. 메서드 이름이 `sendToMe`(`KakaoMessageClient.java:16`)이고, 주소가 `/v2/api/talk/memo/default/send`(`:23`)이다. 주문한 회원의 카카오 토큰으로 보낸다(`OrderController.java:110`).
-  - 주문을 만들 때 받는 사람 정보를 넘기지 않는다. `new Order(option, member.getId(), quantity, message)`(`OrderController.java:96`)
-  - 참고로 초기 주문 데이터의 메시지는 받는 사람에게 쓰는 말이다. 예: `'생일 축하해! 🎉'`, `'엄마 감사합니다 ❤️'`(`V2__Insert_default_data.sql:55,59`)
-- **상태**: 미결정 (본인 알림이 의도인지, 받는 사람에게 보내는 기능이 빠진 것인지 결정 필요)
+> 14번은 요청으로 확인해서 A 섹션으로 옮겼다.
 
 ---
 
@@ -200,16 +262,7 @@
 
 > 아래는 위 항목의 관련 파일을 읽다가 발견한 내용이다. **요청으로는 확인하지 않았고**, 사용자가 처음 준 목록에도 없다. 확인 대상인지부터 판단해 줘야 한다.
 
-### C-1. [AI 추정] 상품 수정도 토큰 없이 될 수 있다
-
-- **작동(추정)**: 1번, 11번과 같은 이유로 `PUT /api/products/{id}`도 인증 없이 성공할 것으로 보인다. (삭제는 요청으로 확인해서 A 섹션 11번으로 옮겼다.)
-- **근거**: `ProductController.updateProduct`(`ProductController.java:62-82`)에 인증 확인이 없다.
-- **상태**: 미결정, 요청으로 확인 필요
-
-### C-3. [AI 추정] 관리자 화면에서 로그인 없이 회원 충전, 수정, 삭제도 될 수 있다
-
-- **작동(추정)**: 13번과 같은 이유로 `AdminMemberController`의 나머지 기능도 인증 없이 될 것으로 보인다. 포인트 충전(`POST /admin/members/{id}/charge-point`), 회원 수정(`POST /admin/members/{id}/edit`), 회원 삭제(`POST /admin/members/{id}/delete`)가 여기에 해당한다. (목록 화면이 열리는 것은 요청으로 확인해서 A 섹션 13번으로 옮겼다.)
-- **근거**: `AdminMemberController.java:62-91`에 인증이나 권한 확인이 없다.
-- **상태**: 미결정, 요청으로 확인 필요
-
-> C-2는 요청으로 모두 확인해서 A 섹션 12번으로 옮겼다. 그래서 C-2 번호는 비어 있다.
+> 지금 남은 AI 추정 항목은 없다. 모두 요청으로 확인해서 A 섹션으로 옮겼다.
+> - C-1 → A 섹션 11번(상품 삭제), 18번(상품 수정)
+> - C-2 → A 섹션 12번(재고 부족 주문)
+> - C-3 → A 섹션 13번(회원 목록 화면), 22번(회원 수정, 충전, 삭제)

@@ -16,7 +16,9 @@
 
 ## 1. 비회원은 이메일과 비밀번호로 회원 가입을 한다 (왜: 확인 필요)
 - API: `POST /api/members/register`
-- 확인한 응답: 아직 확인 안 함
+- 확인한 응답:
+  - 새 이메일: 201, token
+  - 이미 가입한 이메일: 400
 - 비고: 가입하면 바로 토큰을 준다
 
 ## 2. 비회원은 이메일과 비밀번호로 로그인한다 (왜: 확인 필요)
@@ -26,19 +28,19 @@
 
 ## 3. 비회원은 카카오 계정으로 로그인한다 (왜: 확인 필요)
 - API: `GET /api/auth/kakao/login`, `GET /api/auth/kakao/callback`
-- 확인한 응답: 아직 확인 안 함
+- 확인한 응답: 카카오 동의 후 콜백에서 200, `{"token": ...}` (우리 서비스 JWT)
 - 비고: 처음이면 자동으로 가입된다. 단서: scope에 `talk_message`가 있고, 받은 카카오 토큰을 주문 알림 발송에 쓴다
 
 ## 4. 비회원은 상품 목록과 상세를 본다 (왜: 확인 필요)
 - API: `GET /api/products`, `GET /api/products/{id}`
 - 확인한 응답:
-  - `GET /api/products`: 아직 확인 안 함
+  - `GET /api/products`: 200
   - `GET /api/products/{id}`: 200, 상품 이름과 가격
 - 비고: 없음
 
 ## 5. 비회원은 카테고리 목록을 본다 (왜: 확인 필요)
 - API: `GET /api/categories`
-- 확인한 응답: 아직 확인 안 함
+- 확인한 응답: 200
 - 비고: 없음
 
 ## 6. 비회원은 상품의 옵션 목록을 본다 (왜: 확인 필요)
@@ -53,8 +55,8 @@
 
 ## 8. 관리자는 상품을 수정한다 (왜: 확인 필요)
 - API: `PUT /api/products/{id}`
-- 확인한 응답: 아직 확인 안 함
-- 비고: ⚠ 실제로도 토큰 없이 누구나 할 수 있을 것으로 보인다(open-questions C-1, 요청으로는 미확인)
+- 확인한 응답: 200 (토큰 없이도 성공), 다시 조회하면 바뀐 이름과 가격
+- 비고: ⚠ 실제로는 토큰 없이 누구나 할 수 있다(open-questions 18번)
 
 ## 9. 관리자는 상품을 삭제한다 (왜: 확인 필요)
 - API: `DELETE /api/products/{id}`
@@ -65,9 +67,9 @@
 - API: `POST /api/categories`, `PUT /api/categories/{id}`, `DELETE /api/categories/{id}`
 - 확인한 응답:
   - `POST /api/categories`: 201 (토큰 없이도 성공)
-  - `PUT /api/categories/{id}`: 아직 확인 안 함
+  - `PUT /api/categories/{id}`: 200 (토큰 없이도 성공), 목록에 바뀐 이름
   - `DELETE /api/categories/{id}`: 204
-- 비고: ⚠ 등록과 삭제는 토큰 없이 누구나 할 수 있다(open-questions 15번). 수정은 미확인
+- 비고: ⚠ 등록, 수정, 삭제 모두 토큰 없이 누구나 할 수 있다(open-questions 15번)
 
 ## 11. 관리자는 상품에 옵션을 추가한다 (왜: 확인 필요)
 - API: `POST /api/products/{productId}/options`
@@ -86,7 +88,9 @@
 
 ## 14. 회원은 상품을 위시에 담는다 (왜: 확인 필요)
 - API: `POST /api/wishes`
-- 확인한 응답: 아직 확인 안 함
+- 확인한 응답:
+  - 처음 담기: 201
+  - 같은 상품 다시 담기: 200, 같은 위시 id. 목록에는 한 번만 있음
 - 비고: 이미 담았으면 기존 위시를 200으로 돌려준다
 
 ## 15. 회원은 자기 위시를 삭제한다 (왜: 확인 필요)
@@ -104,27 +108,29 @@
 
 ## 17. 회원은 자기 주문 내역을 본다 (왜: 확인 필요)
 - API: `GET /api/orders`
-- 확인한 응답: 아직 확인 안 함
+- 확인한 응답: 200, 성공한 주문만 보이고 실패한 주문은 없음
 - 비고: 없음
 
 ## 18. 관리자는 상품 목록 화면을 본다 (왜: 확인 필요)
 - API: `GET /admin/products`
-- 확인한 응답: 아직 확인 안 함
+- 확인한 응답: 화면이 열림
 - 비고: 없음
 
 ## 19. 관리자는 담당 MD와 협의한 "카카오" 상품명을 쓰려고, "카카오"가 들어간 이름으로도 상품을 등록한다
 - API: `GET /admin/products/new`, `POST /admin/products`
-- 확인한 응답: 아직 확인 안 함
-- 비고: 근거는 `ProductNameValidator.java:36` 메시지와 `AdminProductController.java:47`의 `allowKakao = true`
+- 확인한 응답:
+  - 관리자 화면: "카카오" 상품명으로 등록 성공
+  - 비교: 같은 이름을 `POST /api/products`로 보내면 400("담당 MD와 협의한 경우에만" 메시지)
+- 비고: 근거는 `ProductNameValidator.java:36` 메시지와 `AdminProductController.java:47`의 `allowKakao = true`. API는 막고 관리자 화면은 허용한다(open-questions 20번)
 
 ## 20. 관리자는 담당 MD와 협의한 "카카오" 상품명을 쓰려고, 상품을 수정할 때도 "카카오"가 들어간 이름을 쓴다
 - API: `GET /admin/products/{id}/edit`, `POST /admin/products/{id}/edit`
-- 확인한 응답: 아직 확인 안 함
+- 확인한 응답: "카카오" 이름을 유지한 채 302, 다시 조회하면 바뀐 값
 - 비고: 근거는 `AdminProductController.java:80`
 
 ## 21. 관리자는 상품을 삭제한다 (왜: 확인 필요)
 - API: `POST /admin/products/{id}/delete`
-- 확인한 응답: 아직 확인 안 함
+- 확인한 응답: 302, 다시 조회하면 404
 - 비고: 없음
 
 ## 22. 관리자는 회원 목록과 포인트를 본다 (왜: 확인 필요)
@@ -134,23 +140,25 @@
 
 ## 23. 관리자는 회원을 등록한다 (왜: 확인 필요)
 - API: `GET /admin/members/new`, `POST /admin/members`
-- 확인한 응답: 아직 확인 안 함
+- 확인한 응답: 302
 - 비고: 없음
 
 ## 24. 관리자는 회원의 이메일과 비밀번호를 수정한다 (왜: 확인 필요)
 - API: `GET /admin/members/{id}/edit`, `POST /admin/members/{id}/edit`
-- 확인한 응답: 아직 확인 안 함
-- 비고: 없음
+- 확인한 응답: 302, 목록에 바뀐 이메일
+- 비고: ⚠ 실제로는 로그인 없이 누구나 할 수 있다(open-questions 22번). 이미 삭제한 회원 id로 수정하면 404가 아니라 500이 온다(open-questions 21번)
 
 ## 25. 관리자는 회원 포인트를 충전한다 (왜: 확인 필요)
 - API: `POST /admin/members/{id}/charge-point`
-- 확인한 응답: 아직 확인 안 함
-- 비고: 단서: `Member.java:56` 주석 "point deduction for order payment"에서 포인트는 주문 결제에 쓰인다
+- 확인한 응답:
+  - 10000: 302, 충전 성공
+  - 0, -100: 500, 실패 뒤 포인트는 그대로
+- 비고: ⚠ 실제로는 로그인 없이 누구나 할 수 있다(open-questions 22번). 단서: `Member.java:56` 주석 "point deduction for order payment"에서 포인트는 주문 결제에 쓰인다. 0이나 음수는 500이 온다(open-questions 19번)
 
 ## 26. 관리자는 회원을 삭제한다 (왜: 확인 필요)
 - API: `POST /admin/members/{id}/delete`
-- 확인한 응답: 아직 확인 안 함
-- 비고: 없음
+- 확인한 응답: 302, 목록에서 사라짐
+- 비고: ⚠ 실제로는 로그인 없이 누구나 할 수 있다(open-questions 22번)
 
 ---
 
