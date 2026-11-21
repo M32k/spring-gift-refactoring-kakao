@@ -4,10 +4,10 @@
 
 ## 작업을 확인하는 방법
 
-- `./gradlew build`: 컴파일만 확인한다. 테스트가 0개라서 통과해도 동작이 맞다는 뜻은 아니다.
+- `./gradlew build`: 컴파일하고 인수 테스트도 함께 실행한다.
 - `./gradlew bootRun`: `localhost:8080`에 서버가 뜬다.
 - 요청으로 확인하는 일은 사용자가 한다. `http/*.http` 파일이나 curl을 쓴다. AI는 보낼 요청을 적어 줄 수만 있고 실행하지 않는다.
-- 인수 테스트 실행 명령은 2단계에서 정한다.
+- 인수 테스트: `./gradlew test --tests 'gift.acceptance.CucumberTest'`. 결과 보고서는 `build/reports/tests/test/index.html`에 생긴다. 시나리오마다 초기 데이터로 되돌린 뒤 실행한다.
 
 ## 코드가 오해를 부르는 곳
 
@@ -27,7 +27,7 @@
 - 지금(1·2단계)은 분석과 인수 테스트만 한다. `src/main`은 고치지 않는다. 리팩터링 목표는 나중에 정한다.
 - 현재 동작은 버그처럼 보여도 그대로 둔다. 이상한 동작은 `docs/open-questions.md`에 기록만 하고, 고칠지는 사람이 정한다.
 - `docs/open-questions.md`의 항목 번호는 다시 매기지 않는다. 다른 문서가 번호로 항목을 가리킨다.
-- 인수 테스트는 HTTP 요청과 응답으로만 검증한다. 상태 코드, 응답 본문, 바뀐 상태(다음 요청으로 확인)까지 본다.
+- 인수 테스트는 HTTP 요청과 응답으로만 검증한다. 상태 코드, 응답 본문, 바뀐 상태(다음 요청으로 확인)까지 본다. 포인트만 예외로 DB에서 확인한다. 이유는 `docs/work/02-acceptance-test/test-strategy.md`에 있다.
 - 카카오 키는 `KAKAO_CLIENT_ID`, `KAKAO_CLIENT_SECRET` 환경 변수로 넣는다. 저장소에 키를 넣지 않는다.
 - PR은 Fork의 `M32k` 브랜치에서 원본 미션 저장소로 보낸다.
 
