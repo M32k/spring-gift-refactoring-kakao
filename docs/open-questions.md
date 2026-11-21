@@ -117,6 +117,39 @@
   - 프로젝트에 공통 인증 장치(Spring Security, 필터, 인터셉터)가 없다. 관리자 화면을 일부러 열어 뒀다는 주석도 없다.
 - **상태**: 미결정
 
+### 15. 카테고리 등록과 삭제가 로그인 토큰 없이 성공한다
+
+> 15–17번은 B 섹션 14번 다음 번호로 매겼다.
+
+- **작동**: `POST /api/categories`와 `DELETE /api/categories/{id}`를 `Authorization` 헤더 없이 보내도 성공한다. 등록은 201 Created, 삭제는 204 No Content가 오고, 실제로 반영된다.
+- **확인한 방법**: 직접 curl로 확인함.
+  - 등록: 토큰 없이 카테고리를 등록하자 201과 id 6이 왔다.
+  - 삭제: 토큰 없이 id 6을 삭제하자 204가 왔다. 그 뒤 목록에서 사라졌다.
+  - 이전 확인에서 만든 테스트 카테고리 id 4도 토큰 없이 삭제했고, 204가 왔다. 지금 카테고리 목록에는 초기 데이터 id 1–3만 있다.
+- **이유가 코드에 있는지**: 없음.
+  - `CategoryController`의 등록 `createCategory`(`src/main/java/gift/category/CategoryController.java:34-39`)와 삭제 `deleteCategory`(`:56-60`)는 `Authorization` 헤더를 받지 않고 인증도 확인하지 않는다. 수정 `updateCategory`(`:41-54`)도 마찬가지지만, 요청으로는 확인하지 않았다.
+  - 1번과 원인이 같다. 공통 인증 장치가 없고, 인증을 일부러 뺐다는 주석도 없다.
+- **상태**: 미결정
+
+### 16. 옵션 추가가 로그인 토큰 없이 성공한다
+
+- **작동**: `POST /api/products/{productId}/options`를 `Authorization` 헤더 없이 보내도 201 Created로 옵션이 추가된다.
+- **확인한 방법**: 직접 curl로 확인함. 토큰 없이 상품 1에 옵션을 추가하자 201이 왔다.
+- **이유가 코드에 있는지**: 없음.
+  - `OptionController.createOption`(`src/main/java/gift/option/OptionController.java:47-67`)은 `Authorization` 헤더를 받지 않고 인증도 확인하지 않는다.
+  - 1번과 원인이 같다. 인증을 일부러 뺐다는 주석은 없다. 클래스 주석(`OptionController.java:20-23`)에는 옵션 규칙만 있다.
+- **상태**: 미결정
+
+### 17. 옵션 삭제가 로그인 토큰 없이 성공한다
+
+- **작동**: `DELETE /api/products/{productId}/options/{optionId}`를 `Authorization` 헤더 없이 보내도 204 No Content가 오고, 옵션이 실제로 삭제된다.
+- **확인한 방법**: 직접 curl로 확인함. 16번에서 추가한 옵션을 토큰 없이 삭제하자 204가 왔다. 그 뒤 상품 1의 옵션 목록에서 사라졌다.
+  - 추가한 옵션을 지웠기 때문에, 삭제할 때 상품 1에는 옵션이 3개 있었다. 그래서 "옵션이 1개뿐이면 삭제할 수 없다"는 규칙(`OptionController.java:80-82`)에는 걸리지 않았다.
+- **이유가 코드에 있는지**: 없음.
+  - `OptionController.deleteOption`(`OptionController.java:69-91`)은 `Authorization` 헤더를 받지 않고 인증도 확인하지 않는다.
+  - 1번과 원인이 같다. 인증을 일부러 뺐다는 주석은 없다.
+- **상태**: 미결정
+
 ---
 
 ## B. 코드를 읽어서 확인한 작동 (요청으로는 아직 확인 안 함)
@@ -147,6 +180,19 @@
   - 하지만 `catch (Exception ignored) {}`(`:111-112`)는 로그도 남기지 않는다. 실패를 기록하지 않는 이유는 코드에 없다.
   - 발송은 `KakaoMessageClient.sendToMe`(`src/main/java/gift/order/KakaoMessageClient.java:16-29`)에서 하고, 재시도는 없다.
 - **상태**: 미결정 (실패 무시는 정책으로 보이지만, 로그를 남길지는 결정 필요)
+
+### 14. 선물 도착 메시지를 주문한 본인에게 보낸다
+
+> 번호는 A 섹션의 11–13번 다음으로 매겼다.
+
+- **작동**: 주문하면 카카오 메시지가 "🎁 선물이 도착했어요!"라는 문구로 나간다. 그런데 받는 사람은 선물을 받을 사람이 아니라 주문한 회원 본인이다.
+- **확인한 방법**: 코드를 읽어 확인함.
+- **이유가 코드에 있는지**: 없음. 선물 문구를 본인에게 보내는 이유를 설명하는 주석은 없다.
+  - 메시지 문구는 받는 사람 입장의 선물 알림이다. `"🎁 선물이 도착했어요!"`(`src/main/java/gift/order/KakaoMessageClient.java:39`), 버튼 `"선물 확인하기"`(`:41`).
+  - 보내는 곳은 "나에게 보내기" API다. 메서드 이름이 `sendToMe`(`KakaoMessageClient.java:16`)이고, 주소가 `/v2/api/talk/memo/default/send`(`:23`)이다. 주문한 회원의 카카오 토큰으로 보낸다(`OrderController.java:110`).
+  - 주문을 만들 때 받는 사람 정보를 넘기지 않는다. `new Order(option, member.getId(), quantity, message)`(`OrderController.java:96`)
+  - 참고로 초기 주문 데이터의 메시지는 받는 사람에게 쓰는 말이다. 예: `'생일 축하해! 🎉'`, `'엄마 감사합니다 ❤️'`(`V2__Insert_default_data.sql:55,59`)
+- **상태**: 미결정 (본인 알림이 의도인지, 받는 사람에게 보내는 기능이 빠진 것인지 결정 필요)
 
 ---
 
