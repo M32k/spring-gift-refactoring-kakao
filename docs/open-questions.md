@@ -15,7 +15,7 @@
 ### 1. 상품 등록이 로그인 토큰 없이 성공한다
 
 - **작동**: `POST /api/products`를 `Authorization` 헤더 없이 보내도 201 Created로 상품이 등록된다.
-- **확인한 방법**: curl로 토큰 없이 요청을 보냄.
+- **확인한 방법**: curl로 로그인 토큰 없이 요청을 보냄.
 - **이유가 코드에 있는지**: 없음.
   - `ProductController.createProduct`(`src/main/java/gift/product/ProductController.java:48-60`)는 `@RequestHeader("Authorization")`를 받지 않고 `AuthenticationResolver`도 주입받지 않는다.
   - 프로젝트에 Spring Security 설정이나 공통 인증 필터, 인터셉터가 없다. 그래서 인증은 컨트롤러마다 직접 확인하는 방식이고, 이 컨트롤러에는 그 확인이 없다.
@@ -24,10 +24,10 @@
 
 ### 2. 주문 금액이 옵션이 아니라 상품 가격 기준으로 계산된다
 
-- **작동**: 주문 금액은 옵션과 관계없이 `상품 가격 × 수량`으로 계산된다. 옵션에는 가격 필드가 없어서, 옵션이 달라도(예: 맥북 "스페이스 블랙 / M1 Pro"와 "실버 / M1 Max") 같은 금액이 차감된다.
+- **작동**: 주문 금액은 옵션과 관계없이 `상품 가격 × 주문 수량`으로 계산된다. 옵션에는 가격 필드가 없어서, 옵션이 달라도(예: 맥북 "스페이스 블랙 / M1 Pro"와 "실버 / M1 Max") 같은 금액이 차감된다.
 - **확인한 방법**: user1(포인트 5,000,000)이 맥북 옵션(재고 10)을 1개 주문하자 201이 오고, 재고는 9, 포인트는 1,640,000이 되었다(curl로 주문, 포인트는 `/admin/members`에서 확인). 줄어든 포인트 3,360,000원은 상품 가격과 같다. 옵션별 가격이 없다는 점은 코드로 확인했다.
 - **이유가 코드에 있는지**: 없음. 상품 가격으로 계산하는 이유를 설명하는 주석은 없다.
-  - 금액 계산: `option.getProduct().getPrice() * request.quantity()`(`src/main/java/gift/order/OrderController.java:91`). 카카오 메시지의 금액도 같은 방식으로 계산한다(`src/main/java/gift/order/KakaoMessageClient.java:32`).
+  - 금액 계산: `option.getProduct().getPrice() * request.quantity()`(`src/main/java/gift/order/OrderController.java:91`). 주문 알림에 적히는 주문 금액도 같은 방식으로 계산한다(`src/main/java/gift/order/KakaoMessageClient.java:32`).
   - `Option` 엔티티(`src/main/java/gift/option/Option.java:16-28`)에는 `id`, `product`, `name`, `quantity`만 있고 가격 필드가 없다.
   - 초기 데이터: 맥북 3,360,000원(`V2__Insert_default_data.sql:9`), 맥북 옵션 2개(`:38-40`), user1 포인트 5,000,000(`:24`).
 - **상태**: 미결정
@@ -55,8 +55,8 @@
 
 ### 5. 다른 회원의 위시를 삭제하려고 하면 403이 온다
 
-- **작동**: user1 토큰으로 user2의 위시(id 3)를 삭제하면 403이 오고, user2의 위시는 그대로 남는다.
-- **확인한 방법**: curl로 user1 토큰을 넣어 `DELETE /api/wishes/3`을 보낸 뒤 위시가 남아 있는지 확인함.
+- **작동**: user1의 로그인 토큰으로 user2의 위시(id 3)를 삭제하면 403이 오고, user2의 위시는 그대로 남는다.
+- **확인한 방법**: curl로 user1의 로그인 토큰을 넣어 `DELETE /api/wishes/3`을 보낸 뒤 위시가 남아 있는지 확인함.
 - **이유가 코드에 있는지**: 소유자 확인 코드는 있지만, 의도를 설명하는 주석은 없다.
   - `if (!wish.getMemberId().equals(member.getId())) return 403`(`src/main/java/gift/wish/WishController.java:95-97`).
   - 확인 순서는 401(인증) → 404(위시 없음) → 403(소유자 아님)이다(`WishController.java:85-97`). 그래서 다른 사람의 위시 id가 있는지 없는지가 404와 403의 차이로 드러난다.
@@ -65,7 +65,7 @@
 
 ### 6. 오류 메시지 언어가 섞여 있다 (한국어와 영어)
 
-- **작동**: 상품 이름 검증 오류 메시지는 한국어인데, 다른 곳에는 영어 메시지가 있다.
+- **작동**: 상품명 검증 오류 메시지는 한국어인데, 다른 곳에는 영어 메시지가 있다.
 - **확인한 방법**: 한국어 메시지는 요청으로, 영어 메시지는 코드로 확인함.
 - **이유가 코드에 있는지**: 없음. 메시지 언어에 대한 규칙이나 주석이 없다.
   - 한국어: `ProductNameValidator`(`src/main/java/gift/product/ProductNameValidator.java:23,28,32,36`), `Option.subtractQuantity`(`src/main/java/gift/option/Option.java:41`), `Member.deductPoint`(`Member.java:59,62`)
@@ -88,7 +88,7 @@
 > 처음에는 C-1(AI 추정)이었고, 요청으로 확인해서 이 섹션으로 옮겼다. B 섹션 항목끼리 번호로 서로 가리키고 있어서, 번호를 다시 매기지 않고 11번으로 붙였다.
 
 - **작동**: `DELETE /api/products/{id}`를 `Authorization` 헤더 없이 보내도 204 No Content가 오고, 상품이 실제로 삭제된다.
-- **확인한 방법**: curl로 토큰 없이 `DELETE /api/products/7`을 보내 204를 받았다. 그 뒤 같은 상품을 조회하자 404가 왔다.
+- **확인한 방법**: curl로 로그인 토큰 없이 `DELETE /api/products/7`을 보내 204를 받았다. 그 뒤 같은 상품을 조회하자 404가 왔다.
 - **이유가 코드에 있는지**: 없음.
   - `ProductController.deleteProduct`(`src/main/java/gift/product/ProductController.java:84-88`)는 `@RequestHeader("Authorization")`를 받지 않고, 인증 확인 없이 바로 `productRepository.deleteById(id)`를 호출한다.
   - 1번과 원인이 같다. 공통 인증 장치가 없고, 이 컨트롤러에는 인증 확인이 없다. 인증을 일부러 뺐다는 주석도 없다.
@@ -98,9 +98,9 @@
 
 > 처음에는 C-2(AI 추정)였고, 요청으로 확인해서 이 섹션으로 옮겼다.
 
-- **작동**: 재고보다 많은 수량을 주문하면 400이 아니라 500이 온다. 그 뒤에도 재고와 포인트는 바뀌지 않는다.
+- **작동**: 재고보다 많은 주문 수량으로 주문하면 400이 아니라 500이 온다. 그 뒤에도 재고와 포인트는 바뀌지 않는다.
   - **3번과의 차이**: 3번(포인트 부족)은 500이 와도 재고가 줄어든 채로 남는다. 이 경우(재고 부족)는 아무 상태도 바뀌지 않는다. 같은 500이어도 실패한 단계에 따라 데이터가 남기도 하고 남지 않기도 한다.
-- **확인한 방법**: user2 토큰으로 일반 감귤 옵션(재고 50)을 51개 주문하자 500이 왔다. 그 뒤 재고는 50, user2 포인트는 3,000,000 그대로였다. 이때 주문 금액은 25,000 × 51 = 1,275,000원이라 포인트는 충분했다. 따라서 실패 원인은 재고 부족이다(`V2__Insert_default_data.sql:17,26,49-50`).
+- **확인한 방법**: user2의 로그인 토큰으로 일반 감귤 옵션(재고 50)을 51개 주문하자 500이 왔다. 그 뒤 재고는 50, user2 포인트는 3,000,000 그대로였다. 이때 주문 금액은 25,000 × 51 = 1,275,000원이라 포인트는 충분했다. 따라서 실패 원인은 재고 부족이다(`V2__Insert_default_data.sql:17,26,49-50`).
 - **이유가 코드에 있는지**: 없음. 작동을 만드는 코드는 다음과 같다.
   - 500인 이유: `Option.subtractQuantity`가 `IllegalArgumentException("차감할 수량이 현재 재고보다 많습니다.")`를 던진다(`src/main/java/gift/option/Option.java:40-42`). 3번과 마찬가지로 `OrderController`에는 이 예외를 400으로 바꾸는 처리기가 없다.
   - 상태가 남지 않는 이유: `subtractQuantity`는 재고를 줄이기 전에 수량을 확인하고 예외를 던진다(`Option.java:40-43`). 그래서 그 뒤의 `optionRepository.save(option)`(`OrderController.java:88`)와 포인트 차감(`:92`)까지 가지 않는다. 3번은 재고를 저장한 뒤에 실패하고, 이 경우는 저장하기 전에 실패한다.
@@ -110,23 +110,23 @@
 
 > 처음에는 C-3(AI 추정)이었고, 요청으로 확인해서 이 섹션으로 옮겼다. 회원 수정, 포인트 충전, 회원 삭제는 22번에 있다.
 
-- **작동**: 토큰이나 로그인 없이 `/admin/members`가 열린다. 4번에서 "관리자 화면에서만 볼 수 있다"고 한 회원 포인트도, 이 화면을 통해 누구나 볼 수 있다.
-- **확인한 방법**: 브라우저에서 토큰 없이 `/admin/members`에 접속하자 화면이 열렸다.
+- **작동**: 로그인하지 않고 로그인 토큰도 없이 `/admin/members`가 열린다. 4번에서 "관리자 화면에서만 볼 수 있다"고 한 회원 포인트도, 이 화면을 통해 누구나 볼 수 있다.
+- **확인한 방법**: 브라우저에서 로그인 토큰 없이 `/admin/members`에 접속하자 화면이 열렸다.
 - **이유가 코드에 있는지**: 없음.
   - `AdminMemberController.list`(`src/main/java/gift/member/AdminMemberController.java:28-32`)는 인증이나 권한 확인 없이 `memberRepository.findAll()`을 화면에 넘긴다.
   - 프로젝트에 공통 인증 장치(Spring Security, 필터, 인터셉터)가 없다. 관리자 화면을 일부러 열어 뒀다는 주석도 없다.
 - **상태**: 미결정
 
-### 14. 선물 도착 메시지를 주문한 본인에게 보낸다
+### 14. "선물이 도착했어요" 주문 알림을 주문한 본인에게 보낸다
 
 > 처음에는 B 섹션(코드로만 확인)이었고, 요청으로 확인해서 이 섹션으로 옮겼다. 번호는 그대로 두었다.
 
-- **작동**: 주문하면 카카오 메시지가 "🎁 선물이 도착했어요!"라는 문구로 나간다. 그런데 받는 사람은 선물을 받을 사람이 아니라 주문한 회원 본인이다.
+- **작동**: 주문하면 카카오톡으로 주문 알림이 "🎁 선물이 도착했어요!"라는 문구로 나간다. 그런데 받는 사람은 선물을 받을 사람이 아니라 주문한 회원 본인이다.
 - **확인한 방법**: 직접 확인함. 카카오 로그인으로 가입한 회원으로 주문했더니, 주문한 본인의 카카오톡에 "선물이 도착했어요" 메시지가 왔다.
 - **이유가 코드에 있는지**: 없음. 선물 문구를 본인에게 보내는 이유를 설명하는 주석은 없다.
   - 메시지 문구는 받는 사람 입장의 선물 알림이다. `"🎁 선물이 도착했어요!"`(`src/main/java/gift/order/KakaoMessageClient.java:39`), 버튼 `"선물 확인하기"`(`:41`).
-  - 보내는 곳은 "나에게 보내기" API다. 메서드 이름이 `sendToMe`(`KakaoMessageClient.java:16`)이고, 주소가 `/v2/api/talk/memo/default/send`(`:23`)이다. 주문한 회원의 카카오 토큰으로 보낸다(`OrderController.java:110`).
-  - 주문을 만들 때 받는 사람 정보를 넘기지 않는다. `new Order(option, member.getId(), quantity, message)`(`OrderController.java:96`)
+  - 보내는 곳은 "나에게 보내기" API다. 메서드 이름이 `sendToMe`(`KakaoMessageClient.java:16`)이고, 주소가 `/v2/api/talk/memo/default/send`(`:23`)이다. 주문한 회원의 카카오 액세스 토큰으로 보낸다(`OrderController.java:110`).
+  - 주문할 때 받는 사람 정보를 넘기지 않는다. `new Order(option, member.getId(), quantity, message)`(`OrderController.java:96`)
   - 참고로 초기 주문 데이터의 메시지는 받는 사람에게 쓰는 말이다. 예: `'생일 축하해! 🎉'`, `'엄마 감사합니다 ❤️'`(`V2__Insert_default_data.sql:55,59`)
 - **상태**: 미결정 (본인 알림이 의도인지, 받는 사람에게 보내는 기능이 빠진 것인지 결정 필요)
 
@@ -136,19 +136,19 @@
 
 - **작동**: `POST /api/categories`, `PUT /api/categories/{id}`, `DELETE /api/categories/{id}`를 `Authorization` 헤더 없이 보내도 성공한다. 등록은 201 Created, 수정은 200 OK, 삭제는 204 No Content가 오고, 실제로 반영된다.
 - **확인한 방법**: 직접 curl로 확인함.
-  - 등록: 토큰 없이 카테고리를 등록하자 201과 id 6이 왔다.
-  - 수정: 토큰 없이 `PUT`을 보내자 200이 왔다. 그 뒤 목록에 바뀐 이름이 나왔다.
-  - 삭제: 토큰 없이 id 6을 삭제하자 204가 왔다. 그 뒤 목록에서 사라졌다.
-  - 이전 확인에서 만든 테스트 카테고리 id 4도 토큰 없이 삭제했고, 204가 왔다. 지금 카테고리 목록에는 초기 데이터 id 1–3만 있다.
+  - 등록: 로그인 토큰 없이 카테고리를 등록하자 201과 id 6이 왔다.
+  - 수정: 로그인 토큰 없이 `PUT`을 보내자 200이 왔다. 그 뒤 목록에 바뀐 이름이 나왔다.
+  - 삭제: 로그인 토큰 없이 id 6을 삭제하자 204가 왔다. 그 뒤 목록에서 사라졌다.
+  - 이전 확인에서 등록한 테스트 카테고리 id 4도 로그인 토큰 없이 삭제했고, 204가 왔다. 지금 카테고리 목록에는 초기 데이터 id 1–3만 있다.
 - **이유가 코드에 있는지**: 없음.
   - `CategoryController`의 등록 `createCategory`(`src/main/java/gift/category/CategoryController.java:34-39`), 수정 `updateCategory`(`:41-54`), 삭제 `deleteCategory`(`:56-60`)는 모두 `Authorization` 헤더를 받지 않고 인증도 확인하지 않는다.
   - 1번과 원인이 같다. 공통 인증 장치가 없고, 인증을 일부러 뺐다는 주석도 없다.
 - **상태**: 미결정
 
-### 16. 옵션 추가가 로그인 토큰 없이 성공한다
+### 16. 옵션 등록이 로그인 토큰 없이 성공한다
 
-- **작동**: `POST /api/products/{productId}/options`를 `Authorization` 헤더 없이 보내도 201 Created로 옵션이 추가된다.
-- **확인한 방법**: 직접 curl로 확인함. 토큰 없이 상품 1에 옵션을 추가하자 201이 왔다.
+- **작동**: `POST /api/products/{productId}/options`를 `Authorization` 헤더 없이 보내도 201 Created로 옵션이 등록된다.
+- **확인한 방법**: 직접 curl로 확인함. 로그인 토큰 없이 상품 1에 옵션을 등록하자 201이 왔다.
 - **이유가 코드에 있는지**: 없음.
   - `OptionController.createOption`(`src/main/java/gift/option/OptionController.java:47-67`)은 `Authorization` 헤더를 받지 않고 인증도 확인하지 않는다.
   - 1번과 원인이 같다. 인증을 일부러 뺐다는 주석은 없다. 클래스 주석(`OptionController.java:20-23`)에는 옵션 규칙만 있다.
@@ -157,8 +157,8 @@
 ### 17. 옵션 삭제가 로그인 토큰 없이 성공한다
 
 - **작동**: `DELETE /api/products/{productId}/options/{optionId}`를 `Authorization` 헤더 없이 보내도 204 No Content가 오고, 옵션이 실제로 삭제된다.
-- **확인한 방법**: 직접 curl로 확인함. 16번에서 추가한 옵션을 토큰 없이 삭제하자 204가 왔다. 그 뒤 상품 1의 옵션 목록에서 사라졌다.
-  - 추가한 옵션을 지웠기 때문에, 삭제할 때 상품 1에는 옵션이 3개 있었다. 그래서 "옵션이 1개뿐이면 삭제할 수 없다"는 규칙(`OptionController.java:80-82`)에는 걸리지 않았다.
+- **확인한 방법**: 직접 curl로 확인함. 16번에서 등록한 옵션을 로그인 토큰 없이 삭제하자 204가 왔다. 그 뒤 상품 1의 옵션 목록에서 사라졌다.
+  - 등록한 옵션을 지웠기 때문에, 삭제할 때 상품 1에는 옵션이 3개 있었다. 그래서 "옵션이 1개뿐이면 삭제할 수 없다"는 규칙(`OptionController.java:80-82`)에는 걸리지 않았다.
 - **이유가 코드에 있는지**: 없음.
   - `OptionController.deleteOption`(`OptionController.java:69-91`)은 `Authorization` 헤더를 받지 않고 인증도 확인하지 않는다.
   - 1번과 원인이 같다. 인증을 일부러 뺐다는 주석은 없다.
@@ -169,7 +169,7 @@
 > 처음에는 C-1(AI 추정)이었고, 요청으로 확인해서 이 섹션으로 옮겼다.
 
 - **작동**: `PUT /api/products/{id}`를 `Authorization` 헤더 없이 보내도 200 OK가 오고, 상품이 실제로 수정된다.
-- **확인한 방법**: 직접 curl로 확인함. 토큰 없이 `PUT`을 보내자 200이 왔다. 그 뒤 다시 조회하자 바뀐 이름과 가격이 나왔다.
+- **확인한 방법**: 직접 curl로 확인함. 로그인 토큰 없이 `PUT`을 보내자 200이 왔다. 그 뒤 다시 조회하자 바뀐 상품명과 가격이 나왔다.
 - **이유가 코드에 있는지**: 없음.
   - `ProductController.updateProduct`(`src/main/java/gift/product/ProductController.java:62-82`)는 `Authorization` 헤더를 받지 않고 인증도 확인하지 않는다.
   - 1번, 11번과 원인이 같다. 인증을 일부러 뺐다는 주석은 없다.
@@ -187,15 +187,15 @@
 
 ### 20. 같은 "카카오" 상품명을 API는 막고 관리자 화면은 허용한다
 
-- **작동**: "카카오"가 들어간 상품명으로 등록하면, `POST /api/products`는 400을 돌려주지만 관리자 화면(`POST /admin/products`)은 등록에 성공한다. 관리자 화면에서는 "카카오" 이름을 유지한 채 수정해도 성공한다.
+- **작동**: "카카오"가 들어간 상품명으로 등록하면, `POST /api/products`는 400을 돌려주지만 관리자 화면(`POST /admin/products`)은 등록에 성공한다. 관리자 화면에서는 "카카오" 상품명을 유지한 채 수정해도 성공한다.
 - **확인한 방법**: API는 직접 curl로, 관리자 화면은 직접 브라우저로 확인함.
   - API(curl): 400과 함께 "담당 MD와 협의한 경우에만" 메시지가 왔다.
-  - 관리자 화면(브라우저): 같은 이름으로 등록에 성공했다. "카카오" 이름을 유지한 채 수정해도 302가 왔고, 다시 조회하자 바뀐 값이 나왔다.
+  - 관리자 화면(브라우저): 같은 상품명으로 등록에 성공했다. "카카오" 상품명을 유지한 채 수정해도 302가 왔고, 다시 조회하자 바뀐 값이 나왔다.
 - **이유가 코드에 있는지**: 부분적으로 있다.
   - 막는 이유는 메시지에 있다: `"\"카카오\"가 포함된 상품명은 담당 MD와 협의한 경우에만 사용할 수 있습니다."`(`src/main/java/gift/product/ProductNameValidator.java:35-37`)
   - 다르게 처리하는 코드: API는 `validate(name)`(`src/main/java/gift/product/ProductController.java:91`)를 호출하고, 이 메서드는 `allowKakao = false`로 검사한다(`ProductNameValidator.java:15-17`). 관리자 화면은 `validate(name, true)`로 허용한다(`src/main/java/gift/product/AdminProductController.java:47,80`).
   - 관리자 화면이 "MD와 협의한 경우"에 해당한다는 설명은 코드에 없다. 관리자 화면에서 등록하면 협의를 거친 것으로 보는지는 확인이 필요하다.
-  - 참고: API의 상품 등록과 수정은 토큰 없이 된다(1번, 18번). `AdminProductController`에도 인증 확인 코드가 없다. 그래서 "카카오" 이름 말고는 API와 관리자 화면 사이에 권한 차이가 없을 것으로 보인다. 관리자 상품 화면이 로그인 없이 열리는지는 요청으로 확인하지 않았다.
+  - 참고: API의 상품 등록과 수정은 로그인 토큰 없이 된다(1번, 18번). `AdminProductController`에도 인증 확인 코드가 없다. 그래서 "카카오" 상품명 말고는 API와 관리자 화면 사이에 권한 차이가 없을 것으로 보인다. 관리자 상품 화면이 로그인 없이 열리는지는 요청으로 확인하지 않았다.
 - **상태**: 미결정
 
 ### 21. 관리자 화면에서 이미 삭제한 회원을 수정하면 404가 아니라 500이 온다
@@ -212,8 +212,8 @@
 
 > 처음에는 C-3(AI 추정)이었고, 요청으로 확인해서 이 섹션으로 옮겼다. 목록 화면이 열리는 것은 13번에 있다.
 
-- **작동**: 토큰이나 로그인 없이 관리자 화면의 회원 수정(`POST /admin/members/{id}/edit`), 포인트 충전(`POST /admin/members/{id}/charge-point`), 회원 삭제(`POST /admin/members/{id}/delete`) 요청을 보내도 302로 성공하고, 실제로 반영된다.
-- **확인한 방법**: 직접 curl로 확인함. 토큰과 로그인 없이 요청을 보냈다.
+- **작동**: 로그인하지 않고 로그인 토큰도 없이 관리자 화면의 회원 수정(`POST /admin/members/{id}/edit`), 포인트 충전(`POST /admin/members/{id}/charge-point`), 회원 삭제(`POST /admin/members/{id}/delete`) 요청을 보내도 302로 성공하고, 실제로 반영된다.
+- **확인한 방법**: 직접 curl로 확인함. 로그인하지 않고 로그인 토큰도 없이 요청을 보냈다.
   - 회원 수정: 302가 왔다. 그 뒤 목록에 바뀐 이메일이 나왔다.
   - 포인트 충전: 10000을 넣자 302가 오고 충전되었다.
   - 회원 삭제: 302가 왔다. 그 뒤 목록에서 사라졌다.
@@ -229,7 +229,7 @@
 
 ### 8. 주문 흐름 주석의 6단계 "위시 정리"가 구현되지 않았다
 
-- **작동**: 주석에는 `6. cleanup wish`가 있지만 `createOrder` 본문에는 위시를 정리하는 코드가 없다. 주문 저장 후 바로 카카오 알림으로 넘어간다.
+- **작동**: 주석에는 `6. cleanup wish`가 있지만 `createOrder` 본문에는 위시를 정리하는 코드가 없다. 주문 저장 후 바로 주문 알림으로 넘어간다.
 - **확인한 방법**: 코드 읽기 (`OrderController.java:61-102`)
 - **이유가 코드에 있는지**: 의도(주석)만 있고, 왜 빠졌는지에 대한 설명은 없다.
   - 주석 `// 6. cleanup wish`(`OrderController.java:67`)
@@ -244,9 +244,9 @@
 - **이유가 코드에 있는지**: 직접적인 설명은 없다. 8번의 "위시 정리" 단계에 쓰려고 넣은 것으로 보이지만, 이것은 추정이다.
 - **상태**: 미결정 (8번 결정에 따라 함께 정리)
 
-### 10. 카카오 메시지 발송이 실패해도 주문은 성공한다
+### 10. 주문 알림 발송이 실패해도 주문은 성공한다
 
-- **작동**: 카카오 메시지 발송에서 나는 모든 예외를 잡고 무시한다. 로그도 남기지 않는다. 주문은 201로 성공한다. 회원에게 카카오 토큰이 없으면 발송을 시도하지 않는다.
+- **작동**: 주문 알림 발송에서 나는 모든 예외를 잡고 무시한다. 로그도 남기지 않는다. 주문은 201로 성공한다. 회원에게 카카오 액세스 토큰이 없으면 발송을 시도하지 않는다.
 - **확인한 방법**: 코드 읽기 (`OrderController.java:98-113`)
 - **이유가 코드에 있는지**: 부분적으로 있다.
   - 주석 `// best-effort kakao notification`(`OrderController.java:98`)과 메서드 이름 `sendKakaoMessageIfPossible`(`:104`)에서 실패해도 괜찮다는 의도가 보인다.
