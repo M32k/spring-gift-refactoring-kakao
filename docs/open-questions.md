@@ -6,6 +6,7 @@
 - 기준 브랜치: `M32k`
 - 작성일: 2026-11-22
 - 코드 위치는 `파일:줄` 형식으로 적는다.
+- 2단계에서 인수 테스트로 지금 작동을 고정한 항목에는 **인수 테스트** 줄에 시나리오 번호를 적는다. 고정했다고 결정된 것은 아니다. 상태는 그대로 미결정이다.
 - "이유가 코드에 있는지"는 주석, 메시지, 이름 등 **작동의 의도를 설명하는 근거**가 코드에 있는지를 뜻한다. 작동을 만드는 코드의 위치와는 따로 적는다.
 
 ---
@@ -20,6 +21,7 @@
   - `ProductController.createProduct`(`src/main/java/gift/product/ProductController.java:48-60`)는 `@RequestHeader("Authorization")`를 받지 않고 `AuthenticationResolver`도 주입받지 않는다.
   - 프로젝트에 Spring Security 설정이나 공통 인증 필터, 인터셉터가 없다. 그래서 인증은 컨트롤러마다 직접 확인하는 방식이고, 이 컨트롤러에는 그 확인이 없다.
   - 인증을 일부러 뺐다는 주석은 없다.
+- **인수 테스트**: `src/test/resources/features/product.feature` 7-1~7-3 (로그인 토큰 없이 등록하는 지금 작동)
 - **상태**: 미결정
 
 ### 2. 주문 금액이 옵션이 아니라 상품 가격 기준으로 계산된다
@@ -42,6 +44,7 @@
   - 그다음 포인트를 줄일 때 예외가 난다: `member.deductPoint(price)`(`OrderController.java:92`) → `throw new IllegalArgumentException("포인트가 부족합니다.")`(`src/main/java/gift/member/Member.java:61-63`).
   - `createOrder`와 `OrderController`에 `@Transactional`이 없다. 프로젝트 전체에도 `@Transactional`이 없어서, 앞에서 저장한 재고 변경이 되돌려지지 않는다.
   - 500인 이유: `OrderController`에는 `@ExceptionHandler`가 없고, 프로젝트에 `@ControllerAdvice`도 없다. 그래서 `IllegalArgumentException`이 400으로 바뀌지 않는다. `ProductController`와 `MemberController`에는 컨트롤러별 400 처리기가 있다.
+- **인수 테스트**: `src/test/resources/features/order.feature` 16-2 (500, 재고는 줄어든 채 남음)
 - **상태**: 미결정
 
 ### 4. 회원이 자기 포인트를 조회하는 API가 없다
@@ -62,6 +65,7 @@
   - `if (!wish.getMemberId().equals(member.getId())) return 403`(`src/main/java/gift/wish/WishController.java:95-97`).
   - 확인 순서는 401(인증) → 404(위시 없음) → 403(소유자 아님)이다(`WishController.java:85-97`). 그래서 다른 사람의 위시 id가 있는지 없는지가 404와 403의 차이로 드러난다.
   - 초기 데이터에서 위시 id 3은 member 3(user2)의 것이다(`V2__Insert_default_data.sql:32-33`).
+- **인수 테스트**: `src/test/resources/features/wish.feature` 15-1 (403, 위시는 그대로)
 - **상태**: 미결정 (현재 작동을 정책으로 확정할지, 404로 숨길지 결정 필요)
 
 ### 6. 오류 메시지 언어가 섞여 있다 (한국어와 영어)
@@ -117,6 +121,7 @@
 - **이유가 코드에 있는지**: 없음. 작동을 만드는 코드는 다음과 같다.
   - 500인 이유: `Option.subtractQuantity`가 `IllegalArgumentException("차감할 수량이 현재 재고보다 많습니다.")`를 던진다(`src/main/java/gift/option/Option.java:40-42`). 3번과 마찬가지로 `OrderController`에는 이 예외를 400으로 바꾸는 처리기가 없다.
   - 상태가 남지 않는 이유: `subtractQuantity`는 재고를 줄이기 전에 수량을 확인하고 예외를 던진다(`Option.java:40-43`). 그래서 그 뒤의 `optionRepository.save(option)`(`OrderController.java:88`)와 포인트 차감(`:92`)까지 가지 않는다. 3번은 재고를 저장한 뒤에 실패하고, 이 경우는 저장하기 전에 실패한다.
+- **인수 테스트**: `src/test/resources/features/order.feature` 16-3 (500, 재고와 포인트 그대로)
 - **상태**: 미결정
 
 ### 13. 관리자 화면(/admin/members)이 로그인 없이 열린다
