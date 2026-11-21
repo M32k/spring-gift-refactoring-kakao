@@ -254,6 +254,15 @@
   - 발송은 `KakaoMessageClient.sendToMe`(`src/main/java/gift/order/KakaoMessageClient.java:16-29`)에서 하고, 재시도는 없다.
 - **상태**: 미결정 (실패 무시는 정책으로 보이지만, 로그를 남길지는 결정 필요)
 
+### 23. JWT_SECRET 환경 변수가 없으면 저장소에 있는 예시 비밀 키로 로그인 토큰을 만든다
+
+- **작동**: `JWT_SECRET` 환경 변수를 넣지 않고 실행하면, `application.properties`에 적힌 예시 기본값이 로그인 토큰의 서명 키가 된다. 로그인 토큰을 만들 때와 확인할 때 모두 이 키를 쓴다.
+- **확인한 방법**: 코드를 읽어 확인함
+  - `jwt.secret=${JWT_SECRET:...}`(`src/main/resources/application.properties:2`)
+  - `JwtProvider` 생성자가 `jwt.secret`으로 서명 키를 만든다(`src/main/java/gift/auth/JwtProvider.java:25-28`).
+- **이유가 코드에 있는지**: 없음. 예시 값을 기본값으로 둔 이유를 설명하는 주석이 없다. `KAKAO_CLIENT_ID`와 `KAKAO_CLIENT_SECRET`은 기본값이 비어 있는데, `JWT_SECRET`만 기본값이 들어 있다.
+- **상태**: 미결정
+
 > 14번은 요청으로 확인해서 A 섹션으로 옮겼다.
 
 ---
