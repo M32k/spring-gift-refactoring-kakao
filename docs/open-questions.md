@@ -1,0 +1,169 @@
+# 확인 필요 목록 (Open Questions)
+
+리팩터링 전에 "의도된 작동인지, 고쳐야 할 작동인지" 결정이 필요한 항목을 모은 문서다.
+여기서는 작동을 기록만 하고, 어떻게 고칠지는 정하지 않는다.
+
+- 기준 브랜치: `practice-interface`
+- 작성일: 2026-11-22
+- 코드 위치는 `파일:줄` 형식으로 적는다.
+- "이유가 코드에 있는지"는 주석, 메시지, 이름 등 **작동의 의도를 설명하는 근거**가 코드에 있는지를 뜻한다. 작동을 만드는 코드의 위치와는 따로 적는다.
+
+---
+
+## A. 요청으로 직접 확인한 작동 (curl, 브라우저)
+
+### 1. 상품 등록이 로그인 토큰 없이 성공한다
+
+- **작동**: `POST /api/products`를 `Authorization` 헤더 없이 보내도 201 Created로 상품이 등록된다.
+- **확인한 방법**: curl로 토큰 없이 요청을 보냄.
+- **이유가 코드에 있는지**: 없음.
+  - `ProductController.createProduct`(`src/main/java/gift/product/ProductController.java:48-60`)는 `@RequestHeader("Authorization")`를 받지 않고 `AuthenticationResolver`도 주입받지 않는다.
+  - 프로젝트에 Spring Security 설정이나 공통 인증 필터, 인터셉터가 없다. 그래서 인증은 컨트롤러마다 직접 확인하는 방식이고, 이 컨트롤러에는 그 확인이 없다.
+  - 인증을 일부러 뺐다는 주석은 없다.
+- **상태**: 미결정
+
+### 2. 주문 금액이 옵션이 아니라 상품 가격 기준으로 계산된다
+
+- **작동**: 주문 금액은 옵션과 관계없이 `상품 가격 × 수량`으로 계산된다. 옵션에는 가격 필드가 없어서, 옵션이 달라도(예: 맥북 "스페이스 블랙 / M1 Pro"와 "실버 / M1 Max") 같은 금액이 차감된다.
+- **확인한 방법**: user1(포인트 5,000,000)이 맥북 옵션(재고 10)을 1개 주문하자 201이 오고, 재고는 9, 포인트는 1,640,000이 되었다(curl로 주문, 포인트는 `/admin/members`에서 확인). 줄어든 포인트 3,360,000원은 상품 가격과 같다. 옵션별 가격이 없다는 점은 코드로 확인했다.
+- **이유가 코드에 있는지**: 없음. 상품 가격으로 계산하는 이유를 설명하는 주석은 없다.
+  - 금액 계산: `option.getProduct().getPrice() * request.quantity()`(`src/main/java/gift/order/OrderController.java:91`). 카카오 메시지의 금액도 같은 방식으로 계산한다(`src/main/java/gift/order/KakaoMessageClient.java:32`).
+  - `Option` 엔티티(`src/main/java/gift/option/Option.java:16-28`)에는 `id`, `product`, `name`, `quantity`만 있고 가격 필드가 없다.
+  - 초기 데이터: 맥북 3,360,000원(`V2__Insert_default_data.sql:9`), 맥북 옵션 2개(`:38-40`), user1 포인트 5,000,000(`:24`).
+- **상태**: 미결정
+
+### 3. 포인트가 부족해서 500이 와도 재고는 줄어든다
+
+- **작동**: 2번에 이어 같은 주문을 다시 하면 포인트가 부족해 500이 온다. 그런데 재고는 9에서 8로 줄어든다.
+- **확인한 방법**: curl로 같은 주문을 두 번째로 보낸 뒤 재고를 확인함.
+- **이유가 코드에 있는지**: 없음. 작동을 만드는 코드는 다음과 같다.
+  - 재고를 줄이고 바로 저장한다: `option.subtractQuantity(...)` → `optionRepository.save(option)`(`OrderController.java:87-88`).
+  - 그다음 포인트를 줄일 때 예외가 난다: `member.deductPoint(price)`(`OrderController.java:92`) → `throw new IllegalArgumentException("포인트가 부족합니다.")`(`src/main/java/gift/member/Member.java:61-63`).
+  - `createOrder`와 `OrderController`에 `@Transactional`이 없다. 프로젝트 전체에도 `@Transactional`이 없어서, 앞에서 저장한 재고 변경이 되돌려지지 않는다.
+  - 500인 이유: `OrderController`에는 `@ExceptionHandler`가 없고, 프로젝트에 `@ControllerAdvice`도 없다. 그래서 `IllegalArgumentException`이 400으로 바뀌지 않는다. `ProductController`와 `MemberController`에는 컨트롤러별 400 처리기가 있다.
+- **상태**: 미결정
+
+### 4. 회원이 자기 포인트를 조회하는 API가 없다
+
+- **작동**: 회원용 API로는 자기 포인트를 볼 수 없다. 관리자 화면 `/admin/members`에서만 볼 수 있다.
+- **확인한 방법**: 브라우저로 `/admin/members`를 확인했고, 회원용 조회 API는 찾지 못함.
+- **이유가 코드에 있는지**: 없음.
+  - `MemberController`(`src/main/java/gift/member/MemberController.java`)에는 `/register`, `/login`만 있다.
+  - 포인트를 보여 주는 곳은 관리자 템플릿 `templates/member/list.html:27`, `templates/member/edit.html:15`뿐이다.
+  - 포인트 충전도 관리자 전용이다: `POST /admin/members/{id}/charge-point`(`src/main/java/gift/member/AdminMemberController.java:75-85`).
+- **상태**: 미결정
+
+### 5. 다른 회원의 위시를 삭제하려고 하면 403이 온다
+
+- **작동**: user1 토큰으로 user2의 위시(id 3)를 삭제하면 403이 오고, user2의 위시는 그대로 남는다.
+- **확인한 방법**: curl로 user1 토큰을 넣어 `DELETE /api/wishes/3`을 보낸 뒤 위시가 남아 있는지 확인함.
+- **이유가 코드에 있는지**: 소유자 확인 코드는 있지만, 의도를 설명하는 주석은 없다.
+  - `if (!wish.getMemberId().equals(member.getId())) return 403`(`src/main/java/gift/wish/WishController.java:95-97`).
+  - 확인 순서는 401(인증) → 404(위시 없음) → 403(소유자 아님)이다(`WishController.java:85-97`). 그래서 다른 사람의 위시 id가 있는지 없는지가 404와 403의 차이로 드러난다.
+  - 초기 데이터에서 위시 id 3은 member 3(user2)의 것이다(`V2__Insert_default_data.sql:32-33`).
+- **상태**: 미결정 (현재 작동을 정책으로 확정할지, 404로 숨길지 결정 필요)
+
+### 6. 오류 메시지 언어가 섞여 있다 (한국어와 영어)
+
+- **작동**: 상품 이름 검증 오류 메시지는 한국어인데, 다른 곳에는 영어 메시지가 있다.
+- **확인한 방법**: 한국어 메시지는 요청으로, 영어 메시지는 코드로 확인함.
+- **이유가 코드에 있는지**: 없음. 메시지 언어에 대한 규칙이나 주석이 없다.
+  - 한국어: `ProductNameValidator`(`src/main/java/gift/product/ProductNameValidator.java:23,28,32,36`), `Option.subtractQuantity`(`src/main/java/gift/option/Option.java:41`), `Member.deductPoint`(`Member.java:59,62`)
+  - 영어: `Member.chargePoint`의 `"Amount must be greater than zero."`(`Member.java:51`), `MemberController`의 `"Email is already registered."`, `"Invalid email or password."`(`MemberController.java:36,47,50`), `AdminMemberController`의 `"Member not found. id=..."`(`AdminMemberController.java:46,57,69,81`)
+  - 같은 `Member` 클래스 안에서도 충전 메시지는 영어, 차감 메시지는 한국어다(`Member.java:51` vs `:59`).
+- **상태**: 미결정
+
+### 7. 초기 데이터의 비밀번호가 평문으로 저장돼 있다
+
+- **작동**: 초기 데이터의 비밀번호가 `password1` 그대로 저장돼 있다.
+- **확인한 방법**: 초기 데이터 SQL 파일을 읽어 확인함.
+- **이유가 코드에 있는지**: 없음.
+  - `V2__Insert_default_data.sql:21-26`: `'admin1234'`, `'password1'`, `'password2'`가 그대로 들어간다.
+  - 로그인도 평문을 그대로 비교한다: `member.getPassword().equals(request.password())`(`MemberController.java:49`). 회원 가입(`MemberController.java:39`)과 관리자 화면의 등록, 수정(`AdminMemberController.java:50,70`)도 받은 값을 그대로 저장한다.
+  - `PasswordEncoder`나 해시 처리는 프로젝트에 없다.
+- **상태**: 미결정
+
+### 11. 상품 삭제가 로그인 토큰 없이 성공한다
+
+> 처음에는 C-1(AI 추정)이었고, 요청으로 확인해서 이 섹션으로 옮겼다. B 섹션 항목끼리 번호로 서로 가리키고 있어서, 번호를 다시 매기지 않고 11번으로 붙였다.
+
+- **작동**: `DELETE /api/products/{id}`를 `Authorization` 헤더 없이 보내도 204 No Content가 오고, 상품이 실제로 삭제된다.
+- **확인한 방법**: curl로 토큰 없이 `DELETE /api/products/7`을 보내 204를 받았다. 그 뒤 같은 상품을 조회하자 404가 왔다.
+- **이유가 코드에 있는지**: 없음.
+  - `ProductController.deleteProduct`(`src/main/java/gift/product/ProductController.java:84-88`)는 `@RequestHeader("Authorization")`를 받지 않고, 인증 확인 없이 바로 `productRepository.deleteById(id)`를 호출한다.
+  - 1번과 원인이 같다. 공통 인증 장치가 없고, 이 컨트롤러에는 인증 확인이 없다. 인증을 일부러 뺐다는 주석도 없다.
+- **상태**: 미결정
+
+### 12. 재고보다 많이 주문하면 500이 오지만 재고와 포인트는 그대로다
+
+> 처음에는 C-2(AI 추정)였고, 요청으로 확인해서 이 섹션으로 옮겼다.
+
+- **작동**: 재고보다 많은 수량을 주문하면 400이 아니라 500이 온다. 그 뒤에도 재고와 포인트는 바뀌지 않는다.
+  - **3번과의 차이**: 3번(포인트 부족)은 500이 와도 재고가 줄어든 채로 남는다. 이 경우(재고 부족)는 아무 상태도 바뀌지 않는다. 같은 500이어도 실패한 단계에 따라 데이터가 남기도 하고 남지 않기도 한다.
+- **확인한 방법**: user2 토큰으로 일반 감귤 옵션(재고 50)을 51개 주문하자 500이 왔다. 그 뒤 재고는 50, user2 포인트는 3,000,000 그대로였다. 이때 주문 금액은 25,000 × 51 = 1,275,000원이라 포인트는 충분했다. 따라서 실패 원인은 재고 부족이다(`V2__Insert_default_data.sql:17,26,49-50`).
+- **이유가 코드에 있는지**: 없음. 작동을 만드는 코드는 다음과 같다.
+  - 500인 이유: `Option.subtractQuantity`가 `IllegalArgumentException("차감할 수량이 현재 재고보다 많습니다.")`를 던진다(`src/main/java/gift/option/Option.java:40-42`). 3번과 마찬가지로 `OrderController`에는 이 예외를 400으로 바꾸는 처리기가 없다.
+  - 상태가 남지 않는 이유: `subtractQuantity`는 재고를 줄이기 전에 수량을 확인하고 예외를 던진다(`Option.java:40-43`). 그래서 그 뒤의 `optionRepository.save(option)`(`OrderController.java:88`)와 포인트 차감(`:92`)까지 가지 않는다. 3번은 재고를 저장한 뒤에 실패하고, 이 경우는 저장하기 전에 실패한다.
+- **상태**: 미결정
+
+### 13. 관리자 화면(/admin/members)이 로그인 없이 열린다
+
+> 처음에는 C-3(AI 추정)이었고, 요청으로 확인해서 이 섹션으로 옮겼다. 충전, 수정, 삭제는 아직 확인하지 않아서 C-3에 AI 추정으로 남겼다.
+
+- **작동**: 토큰이나 로그인 없이 `/admin/members`가 열린다. 4번에서 "관리자 화면에서만 볼 수 있다"고 한 회원 포인트도, 이 화면을 통해 누구나 볼 수 있다.
+- **확인한 방법**: 브라우저에서 토큰 없이 `/admin/members`에 접속하자 화면이 열렸다.
+- **이유가 코드에 있는지**: 없음.
+  - `AdminMemberController.list`(`src/main/java/gift/member/AdminMemberController.java:28-32`)는 인증이나 권한 확인 없이 `memberRepository.findAll()`을 화면에 넘긴다.
+  - 프로젝트에 공통 인증 장치(Spring Security, 필터, 인터셉터)가 없다. 관리자 화면을 일부러 열어 뒀다는 주석도 없다.
+- **상태**: 미결정
+
+---
+
+## B. 코드를 읽어서 확인한 작동 (요청으로는 아직 확인 안 함)
+
+### 8. 주문 흐름 주석의 6단계 "위시 정리"가 구현되지 않았다
+
+- **작동**: 주석에는 `6. cleanup wish`가 있지만 `createOrder` 본문에는 위시를 정리하는 코드가 없다. 주문 저장 후 바로 카카오 알림으로 넘어간다.
+- **확인한 방법**: 코드 읽기 (`OrderController.java:61-102`)
+- **이유가 코드에 있는지**: 의도(주석)만 있고, 왜 빠졌는지에 대한 설명은 없다.
+  - 주석 `// 6. cleanup wish`(`OrderController.java:67`)
+  - 본문의 `// save order`(`:95`) 다음이 바로 `// best-effort kakao notification`(`:98`)이다.
+  - `WishRepository`(`src/main/java/gift/wish/WishRepository.java`)에는 조회 메서드만 있고, 회원과 상품으로 삭제하는 전용 메서드는 없다.
+- **상태**: 미결정 (주석이 맞는지, 구현이 맞는지 결정 필요)
+
+### 9. OrderController가 WishRepository를 주입받지만 사용하지 않는다
+
+- **작동**: `wishRepository` 필드를 선언하고 생성자에서 주입받지만, 어떤 메서드에서도 쓰지 않는다.
+- **확인한 방법**: 코드 읽기. 파일 안에서 `wishRepository`는 선언(`OrderController.java:26`), 생성자 매개변수(`:34`), 대입(`:41`)에만 나온다.
+- **이유가 코드에 있는지**: 직접적인 설명은 없다. 8번의 "위시 정리" 단계에 쓰려고 넣은 것으로 보이지만, 이것은 추정이다.
+- **상태**: 미결정 (8번 결정에 따라 함께 정리)
+
+### 10. 카카오 메시지 발송이 실패해도 주문은 성공한다
+
+- **작동**: 카카오 메시지 발송에서 나는 모든 예외를 잡고 무시한다. 로그도 남기지 않는다. 주문은 201로 성공한다. 회원에게 카카오 토큰이 없으면 발송을 시도하지 않는다.
+- **확인한 방법**: 코드 읽기 (`OrderController.java:98-113`)
+- **이유가 코드에 있는지**: 부분적으로 있다.
+  - 주석 `// best-effort kakao notification`(`OrderController.java:98`)과 메서드 이름 `sendKakaoMessageIfPossible`(`:104`)에서 실패해도 괜찮다는 의도가 보인다.
+  - 하지만 `catch (Exception ignored) {}`(`:111-112`)는 로그도 남기지 않는다. 실패를 기록하지 않는 이유는 코드에 없다.
+  - 발송은 `KakaoMessageClient.sendToMe`(`src/main/java/gift/order/KakaoMessageClient.java:16-29`)에서 하고, 재시도는 없다.
+- **상태**: 미결정 (실패 무시는 정책으로 보이지만, 로그를 남길지는 결정 필요)
+
+---
+
+## C. AI 추정 (위 목록에 없던 내용)
+
+> 아래는 위 항목의 관련 파일을 읽다가 발견한 내용이다. **요청으로는 확인하지 않았고**, 사용자가 처음 준 목록에도 없다. 확인 대상인지부터 판단해 줘야 한다.
+
+### C-1. [AI 추정] 상품 수정도 토큰 없이 될 수 있다
+
+- **작동(추정)**: 1번, 11번과 같은 이유로 `PUT /api/products/{id}`도 인증 없이 성공할 것으로 보인다. (삭제는 요청으로 확인해서 A 섹션 11번으로 옮겼다.)
+- **근거**: `ProductController.updateProduct`(`ProductController.java:62-82`)에 인증 확인이 없다.
+- **상태**: 미결정, 요청으로 확인 필요
+
+### C-3. [AI 추정] 관리자 화면에서 로그인 없이 회원 충전, 수정, 삭제도 될 수 있다
+
+- **작동(추정)**: 13번과 같은 이유로 `AdminMemberController`의 나머지 기능도 인증 없이 될 것으로 보인다. 포인트 충전(`POST /admin/members/{id}/charge-point`), 회원 수정(`POST /admin/members/{id}/edit`), 회원 삭제(`POST /admin/members/{id}/delete`)가 여기에 해당한다. (목록 화면이 열리는 것은 요청으로 확인해서 A 섹션 13번으로 옮겼다.)
+- **근거**: `AdminMemberController.java:62-91`에 인증이나 권한 확인이 없다.
+- **상태**: 미결정, 요청으로 확인 필요
+
+> C-2는 요청으로 모두 확인해서 A 섹션 12번으로 옮겼다. 그래서 C-2 번호는 비어 있다.
