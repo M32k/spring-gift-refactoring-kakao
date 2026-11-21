@@ -36,6 +36,7 @@
 
 - **작동**: 2번에 이어 같은 주문을 다시 하면 포인트가 부족해 500이 온다. 그런데 재고는 9에서 8로 줄어든다.
 - **확인한 방법**: curl로 같은 주문을 두 번째로 보낸 뒤 재고를 확인함.
+  - 초기 데이터의 user2(포인트 3,000,000)로 한 번에 주문해도 같은 작동
 - **이유가 코드에 있는지**: 없음. 작동을 만드는 코드는 다음과 같다.
   - 재고를 줄이고 바로 저장한다: `option.subtractQuantity(...)` → `optionRepository.save(option)`(`OrderController.java:87-88`).
   - 그다음 포인트를 줄일 때 예외가 난다: `member.deductPoint(price)`(`OrderController.java:92`) → `throw new IllegalArgumentException("포인트가 부족합니다.")`(`src/main/java/gift/member/Member.java:61-63`).
