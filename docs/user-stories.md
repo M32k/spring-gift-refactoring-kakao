@@ -110,7 +110,17 @@
   - `POST /api/categories`: 201 (로그인 토큰 없이도 성공)
   - `PUT /api/categories/{id}`: 200 (로그인 토큰 없이도 성공), 목록에 바뀐 이름
   - `DELETE /api/categories/{id}`: 204
+  - 빈 이름 등록: 400
+  - 같은 이름 등록: 500
+  - 없는 카테고리 수정: 404
+  - 없는 카테고리 + 빈 이름 수정: 400
+  - 상품이 있는 카테고리 삭제: 500
+  - 없는 카테고리 삭제: 204
 - 비고: 등록, 수정, 삭제 모두 로그인 토큰 없이 누구나 할 수 있다(open-questions 15번)
+
+### 인수 조건
+
+인수 조건: `src/test/resources/features/category-manage.feature` (10-1~10-9)
 
 ## 11. 관리자는 상품에 옵션을 등록한다 (왜: 확인 필요)
 - API: `POST /api/products/{productId}/options`

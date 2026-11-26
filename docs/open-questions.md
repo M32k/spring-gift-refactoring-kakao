@@ -161,6 +161,7 @@
 - **이유가 코드에 있는지**: 없음.
   - `CategoryController`의 등록 `createCategory`(`src/main/java/gift/category/CategoryController.java:34-39`), 수정 `updateCategory`(`:41-54`), 삭제 `deleteCategory`(`:56-60`)는 모두 `Authorization` 헤더를 받지 않고 인증도 확인하지 않는다.
   - 1번과 원인이 같다. 공통 인증 장치가 없고, 인증을 일부러 뺐다는 주석도 없다.
+- **인수 테스트**: `src/test/resources/features/category-manage.feature` 10-1, 10-2, 10-4 (로그인 토큰 없이 등록, 수정, 삭제되는 지금 작동)
 - **상태**: 미결정
 
 ### 16. 옵션 등록이 로그인 토큰 없이 성공한다
@@ -269,6 +270,41 @@
   - 이 예외를 처리하는 곳이 없어서 500이 된다. `OptionController`의 `@ExceptionHandler`는 `IllegalArgumentException`만 처리하고(`OptionController.java:93`), 프로젝트에 `@ControllerAdvice`도 없다.
   - 24번(상품 삭제)과 원인이 같다.
 - **인수 테스트**: `src/test/resources/features/option-delete.feature` 12-7 (500, 옵션 그대로)
+- **상태**: 미결정
+
+### 26. 같은 이름의 카테고리를 등록하면 500이 온다
+
+- **작동**: 이미 있는 카테고리 이름으로 등록하면 500이 온다. 카테고리 목록은 그대로다.
+- **확인한 방법**: 직접 curl로 확인함. 앱을 새로 켜서 초기 데이터로 되돌린 뒤 이름 "전자기기"(카테고리 1의 이름)로 등록하자 500이 왔다. 그 뒤 카테고리 목록은 1~3 그대로였다. 실패한 등록이 번호 4를 써 버려서, 다음에 등록한 카테고리는 번호 5가 되었다.
+- **이유가 코드에 있는지**: 없음. 작동을 만드는 코드는 다음과 같다.
+  - `category.name`에 `unique` 제약이 있다(`src/main/resources/db/migration/V1__Initialize_project_tables.sql:4`).
+  - `CategoryController.createCategory`는 같은 이름이 있는지 확인하지 않고 바로 `categoryRepository.save(...)`를 부른다(`src/main/java/gift/category/CategoryController.java:35`).
+  - 이 예외를 처리하는 곳이 없어서 500이 된다. `CategoryController`에는 `@ExceptionHandler`가 없고, 프로젝트에 `@ControllerAdvice`도 없다.
+  - 옵션명은 같은 상품 안에서 중복을 미리 확인해 400으로 돌려주는데(`OptionService`의 "이미 존재하는 옵션명입니다."), 카테고리 이름은 그런 확인이 없다.
+- **인수 테스트**: `src/test/resources/features/category-manage.feature` 10-7 (500, 목록 그대로)
+- **상태**: 미결정
+
+### 27. 상품이 있는 카테고리를 삭제하면 500이 온다
+
+- **작동**: 상품이 속한 카테고리를 삭제하면 500이 온다. 카테고리는 그대로다.
+- **확인한 방법**: 직접 curl로 확인함. 앱을 새로 켜서 초기 데이터로 되돌린 뒤 카테고리 1(상품 1, 2가 속함)을 삭제하자 500이 왔다. 그 뒤 카테고리 목록은 1~3 그대로였다.
+- **이유가 코드에 있는지**: 없음. 작동을 만드는 코드는 다음과 같다.
+  - `product.category_id` 외래 키에 `ON DELETE`가 없다(`src/main/resources/db/migration/V1__Initialize_project_tables.sql:17`).
+  - `CategoryController.deleteCategory`는 상품이 있는지 확인하지 않고 바로 `categoryRepository.deleteById(id)`를 부른다(`src/main/java/gift/category/CategoryController.java:55`).
+  - 이 예외를 처리하는 곳이 없어서 500이 된다. `CategoryController`에는 `@ExceptionHandler`가 없고, 프로젝트에 `@ControllerAdvice`도 없다.
+  - 24번(상품 삭제), 25번(옵션 삭제)과 원인이 같다.
+- **인수 테스트**: `src/test/resources/features/category-manage.feature` 10-5 (500, 카테고리 그대로)
+- **상태**: 미결정
+
+### 28. 없는 카테고리를 삭제해도 404가 아니라 204가 온다
+
+- **작동**: 없는 카테고리 번호로 삭제해도 204가 온다. 카테고리 목록은 그대로다.
+- **확인한 방법**: 직접 curl로 확인함. 앱을 새로 켜서 초기 데이터로 되돌린 뒤 카테고리 999를 삭제하자 204가 왔다. 그 뒤 카테고리 목록은 1~3 그대로였다.
+- **이유가 코드에 있는지**: 없음. 작동을 만드는 코드는 다음과 같다.
+  - `CategoryController.deleteCategory`는 카테고리가 있는지 확인하지 않고 바로 `categoryRepository.deleteById(id)`를 부른다(`src/main/java/gift/category/CategoryController.java:55`).
+  - Spring Data JPA 3의 `deleteById`는 없는 번호여도 예외를 던지지 않는다. 그래서 삭제할 것이 없어도 204가 된다.
+  - 상품 삭제(9-4)와 같은 이유다. `ProductService.deleteProduct`도 확인 없이 `deleteById`를 불러서, 없는 상품 999를 삭제해도 204가 온다. 반면 수정은 없는 카테고리에 404를 돌려준다(10-3).
+- **인수 테스트**: `src/test/resources/features/category-manage.feature` 10-6 (204, 목록 그대로)
 - **상태**: 미결정
 
 ---

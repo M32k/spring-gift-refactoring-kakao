@@ -39,7 +39,7 @@
 | WishController | 15-1 | 끝(L3): `wish-list.feature`(13-1~13-3), `wish-add.feature`(14-1~14-3), `wish.feature`(15-2~15-3) |
 | ProductController | 7-1~7-3 | 끝(L4): `product-view.feature`(4-1~4-4), `product-update.feature`(8-1~8-6), `product-delete.feature`(9-1~9-4) |
 | OptionController | 없음 | 끝(L5): `option-list.feature`(6-1~6-2), `option-create.feature`(11-1~11-6), `option-delete.feature`(12-1~12-7) |
-| CategoryController | 없음 | 필요: 스토리 5, 10 |
+| CategoryController | 없음 | 끝(L6): `category-list.feature`(5-1), `category-manage.feature`(10-1~10-9) |
 | AdminProductController | 없음 | 이번에는 옮기지 않는다(아래 "옮기지 않은 것") |
 | AdminMemberController | 없음 | 이번에는 옮기지 않는다(아래 "옮기지 않은 것") |
 | KakaoAuthController | 없음. 만들 수 없음(카카오 서버) | 코드 검토와, 사용자가 직접 카카오 로그인해 보기 |
@@ -63,7 +63,7 @@
   - L3: 스토리 13, 14(위시 목록, 담기). 끝: `wish-list.feature`(13-1~13-3), `wish-add.feature`(14-1~14-3), `wish.feature`(15-2~15-3)
   - L4: 스토리 4, 8, 9(상품 목록, 수정, 삭제). 끝: `product-view.feature`(4-1~4-4), `product-update.feature`(8-1~8-6), `product-delete.feature`(9-1~9-4)
   - L5: 스토리 6, 11, 12(옵션 목록, 등록, 삭제). 끝: `option-list.feature`(6-1~6-2), `option-create.feature`(11-1~11-6), `option-delete.feature`(12-1~12-7)
-  - L6: 스토리 5, 10(카테고리)
+  - L6: 스토리 5, 10(카테고리). 끝: `category-list.feature`(5-1), `category-manage.feature`(10-1~10-9)
 - 관리자 화면 스토리 18~26은 넣지 않는다.
 - 각 항목은 해당 컨트롤러를 옮기는 항목 바로 앞에 한다. 스킬은 스토리 하나씩 받으므로, 스토리가 여러 개인 항목은 더 쪼개도 된다.
 - 바꾸는 파일: 해당 feature 파일, steps 파일, `docs/user-stories.md`
@@ -235,3 +235,6 @@ ArchUnit 규칙 A는 이 두 컨트롤러를 빼고 건다. 옮기게 되면 규
 | API와 관리자 화면에 인증 붙이기 | 로그인 토큰 없이는 실패한다 | 7-1~7-3 | 1, 11, 13, 15~18, 22번 |
 | 위시·주문이 있는 상품 삭제를 500 대신 다른 응답으로(예: 409) 또는 위시도 함께 지우기 | 500이 바뀐다 | 9-3 | 24번 |
 | 주문이 있는 옵션 삭제를 500 대신 다른 응답으로 | 500이 바뀐다 | 12-7 | 25번 |
+| 같은 이름의 카테고리 등록을 500 대신 400으로(옵션명 중복처럼 미리 확인) | 500이 400이 된다 | 10-7 | 26번 |
+| 상품이 있는 카테고리 삭제를 500 대신 다른 응답으로(예: 409) | 500이 바뀐다 | 10-5 | 27번 |
+| 없는 카테고리 삭제를 204 대신 404로 | 204가 404가 된다 | 10-6 | 28번 |
