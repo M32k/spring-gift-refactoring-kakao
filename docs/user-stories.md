@@ -56,7 +56,7 @@
 ## 7. 관리자는 상품을 등록한다 (왜: 확인 필요)
 - API: `POST /api/products`
 - 확인한 응답: 201 (로그인 토큰 없이도 성공)
-- 비고: ⚠ 실제로는 로그인 토큰 없이 누구나 할 수 있다(open-questions 1번). "카카오"가 들어간 상품명은 거부한다
+- 비고: 실제로는 로그인 토큰 없이 누구나 할 수 있다(open-questions 1번). "카카오"가 들어간 상품명은 거부한다
 
 ### 인수 조건
 
@@ -65,12 +65,12 @@
 ## 8. 관리자는 상품을 수정한다 (왜: 확인 필요)
 - API: `PUT /api/products/{id}`
 - 확인한 응답: 200 (로그인 토큰 없이도 성공), 다시 조회하면 바뀐 상품명과 가격
-- 비고: ⚠ 실제로는 로그인 토큰 없이 누구나 할 수 있다(open-questions 18번)
+- 비고: 실제로는 로그인 토큰 없이 누구나 할 수 있다(open-questions 18번)
 
 ## 9. 관리자는 상품을 삭제한다 (왜: 확인 필요)
 - API: `DELETE /api/products/{id}`
 - 확인한 응답: 204, 다시 조회하면 404
-- 비고: ⚠ 실제로는 로그인 토큰 없이 누구나 할 수 있다(open-questions 11번)
+- 비고: 실제로는 로그인 토큰 없이 누구나 할 수 있다(open-questions 11번)
 
 ## 10. 관리자는 카테고리를 등록, 수정, 삭제한다 (왜: 확인 필요)
 - API: `POST /api/categories`, `PUT /api/categories/{id}`, `DELETE /api/categories/{id}`
@@ -78,17 +78,17 @@
   - `POST /api/categories`: 201 (로그인 토큰 없이도 성공)
   - `PUT /api/categories/{id}`: 200 (로그인 토큰 없이도 성공), 목록에 바뀐 이름
   - `DELETE /api/categories/{id}`: 204
-- 비고: ⚠ 등록, 수정, 삭제 모두 로그인 토큰 없이 누구나 할 수 있다(open-questions 15번)
+- 비고: 등록, 수정, 삭제 모두 로그인 토큰 없이 누구나 할 수 있다(open-questions 15번)
 
 ## 11. 관리자는 상품에 옵션을 등록한다 (왜: 확인 필요)
 - API: `POST /api/products/{productId}/options`
 - 확인한 응답: 201 (로그인 토큰 없이도 성공)
-- 비고: ⚠ 실제로는 로그인 토큰 없이 누구나 할 수 있다(open-questions 16번). 같은 상품 안에서 옵션명 중복은 막는다
+- 비고: 실제로는 로그인 토큰 없이 누구나 할 수 있다(open-questions 16번). 같은 상품 안에서 옵션명 중복은 막는다
 
 ## 12. 관리자는 상품의 옵션을 삭제한다 (왜: 확인 필요)
 - API: `DELETE /api/products/{productId}/options/{optionId}`
 - 확인한 응답: 204
-- 비고: ⚠ 실제로는 로그인 토큰 없이 누구나 할 수 있다(open-questions 17번). 옵션이 1개뿐이면 삭제할 수 없다(`OptionController.java:21` 주석은 규칙만 적고 이유는 없다)
+- 비고: 실제로는 로그인 토큰 없이 누구나 할 수 있다(open-questions 17번). 옵션이 1개뿐이면 삭제할 수 없다(`OptionController.java:21` 주석은 규칙만 적고 이유는 없다)
 
 ## 13. 회원은 자기 위시 목록을 본다 (왜: 확인 필요)
 - API: `GET /api/wishes`
@@ -116,7 +116,7 @@
 - 확인한 응답:
   - 성공: 201, 재고와 포인트 차감
   - 포인트 부족: 500, 재고는 줄어듦(open-questions 3번)
-  - 포인트 3,000,000인 user2가 맥북 1개 주문 → 500, 재고 10 → 9 (초기 데이터에서 직접 확인)
+  - 포인트 3,000,000인 user2가 맥북 1개 주문: 500, 재고는 10에서 9로 줄어듦 (초기 데이터에서 직접 확인)
   - 재고 부족: 500, 상태 그대로(open-questions 12번)
 - 비고: "선물이 도착했어요" 주문 알림을 주문한 본인에게 보낸다(open-questions 14번). 주문 금액은 옵션이 아니라 상품 가격으로 계산한다(open-questions 2번)
 
@@ -168,19 +168,19 @@
 ## 24. 관리자는 회원의 이메일과 비밀번호를 수정한다 (왜: 확인 필요)
 - API: `GET /admin/members/{id}/edit`, `POST /admin/members/{id}/edit`
 - 확인한 응답: 302, 목록에 바뀐 이메일
-- 비고: ⚠ 실제로는 로그인 없이 누구나 할 수 있다(open-questions 22번). 이미 삭제한 회원 id로 수정하면 404가 아니라 500이 온다(open-questions 21번)
+- 비고: 실제로는 로그인 없이 누구나 할 수 있다(open-questions 22번). 이미 삭제한 회원 id로 수정하면 404가 아니라 500이 온다(open-questions 21번)
 
 ## 25. 관리자는 회원 포인트를 충전한다 (왜: 확인 필요)
 - API: `POST /admin/members/{id}/charge-point`
 - 확인한 응답:
   - 10000: 302, 충전 성공
   - 0, -100: 500, 실패 뒤 포인트는 그대로
-- 비고: ⚠ 실제로는 로그인 없이 누구나 할 수 있다(open-questions 22번). 단서: `Member.java:56` 주석 "point deduction for order payment"에서 포인트는 주문 결제에 쓰인다. 0이나 음수는 500이 온다(open-questions 19번)
+- 비고: 실제로는 로그인 없이 누구나 할 수 있다(open-questions 22번). 단서: `Member.java:56` 주석 "point deduction for order payment"에서 포인트는 주문 결제에 쓰인다. 0이나 음수는 500이 온다(open-questions 19번)
 
 ## 26. 관리자는 회원을 삭제한다 (왜: 확인 필요)
 - API: `POST /admin/members/{id}/delete`
 - 확인한 응답: 302, 목록에서 사라짐
-- 비고: ⚠ 실제로는 로그인 없이 누구나 할 수 있다(open-questions 22번)
+- 비고: 실제로는 로그인 없이 누구나 할 수 있다(open-questions 22번)
 
 ---
 

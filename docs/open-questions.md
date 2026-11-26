@@ -40,8 +40,8 @@
 - **확인한 방법**: curl로 같은 주문을 두 번째로 보낸 뒤 재고를 확인함.
   - 초기 데이터의 user2(포인트 3,000,000)로 한 번에 주문해도 같은 작동
 - **이유가 코드에 있는지**: 없음. 작동을 만드는 코드는 다음과 같다.
-  - 재고를 줄이고 바로 저장한다: `option.subtractQuantity(...)` → `optionRepository.save(option)`(`OrderController.java:87-88`).
-  - 그다음 포인트를 줄일 때 예외가 난다: `member.deductPoint(price)`(`OrderController.java:92`) → `throw new IllegalArgumentException("포인트가 부족합니다.")`(`src/main/java/gift/member/Member.java:61-63`).
+  - 재고를 줄이고 바로 저장한다: `option.subtractQuantity(...)` 다음에 `optionRepository.save(option)`(`OrderController.java:87-88`).
+  - 그다음 포인트를 줄일 때 예외가 난다: `member.deductPoint(price)`(`OrderController.java:92`)에서 `throw new IllegalArgumentException("포인트가 부족합니다.")`(`src/main/java/gift/member/Member.java:61-63`).
   - `createOrder`와 `OrderController`에 `@Transactional`이 없다. 프로젝트 전체에도 `@Transactional`이 없어서, 앞에서 저장한 재고 변경이 되돌려지지 않는다.
   - 500인 이유: `OrderController`에는 `@ExceptionHandler`가 없고, 프로젝트에 `@ControllerAdvice`도 없다. 그래서 `IllegalArgumentException`이 400으로 바뀌지 않는다. `ProductController`와 `MemberController`에는 컨트롤러별 400 처리기가 있다.
 - **인수 테스트**: `src/test/resources/features/order.feature` 16-2 (500, 재고는 줄어든 채 남음)
@@ -63,7 +63,7 @@
 - **확인한 방법**: curl로 user1의 로그인 토큰을 넣어 `DELETE /api/wishes/3`을 보낸 뒤 위시가 남아 있는지 확인함.
 - **이유가 코드에 있는지**: 소유자 확인 코드는 있지만, 의도를 설명하는 주석은 없다.
   - `if (!wish.getMemberId().equals(member.getId())) return 403`(`src/main/java/gift/wish/WishController.java:95-97`).
-  - 확인 순서는 401(인증) → 404(위시 없음) → 403(소유자 아님)이다(`WishController.java:85-97`). 그래서 다른 사람의 위시 id가 있는지 없는지가 404와 403의 차이로 드러난다.
+  - 확인 순서는 401(인증), 404(위시 없음), 403(소유자 아님) 순서다(`WishController.java:85-97`). 그래서 다른 사람의 위시 id가 있는지 없는지가 404와 403의 차이로 드러난다.
   - 초기 데이터에서 위시 id 3은 member 3(user2)의 것이다(`V2__Insert_default_data.sql:32-33`).
 - **인수 테스트**: `src/test/resources/features/wish.feature` 15-1 (403, 위시는 그대로)
 - **상태**: 미결정 (현재 작동을 정책으로 확정할지, 404로 숨길지 결정 필요)
@@ -150,14 +150,14 @@
 
 ### 15. 카테고리 등록, 수정, 삭제가 로그인 토큰 없이 성공한다
 
-> 15–17번은 B 섹션 14번 다음 번호로 매겼다.
+> 15~17번은 B 섹션 14번 다음 번호로 매겼다.
 
 - **작동**: `POST /api/categories`, `PUT /api/categories/{id}`, `DELETE /api/categories/{id}`를 `Authorization` 헤더 없이 보내도 성공한다. 등록은 201 Created, 수정은 200 OK, 삭제는 204 No Content가 오고, 실제로 반영된다.
 - **확인한 방법**: 직접 curl로 확인함.
   - 등록: 로그인 토큰 없이 카테고리를 등록하자 201과 id 6이 왔다.
   - 수정: 로그인 토큰 없이 `PUT`을 보내자 200이 왔다. 그 뒤 목록에 바뀐 이름이 나왔다.
   - 삭제: 로그인 토큰 없이 id 6을 삭제하자 204가 왔다. 그 뒤 목록에서 사라졌다.
-  - 이전 확인에서 등록한 테스트 카테고리 id 4도 로그인 토큰 없이 삭제했고, 204가 왔다. 지금 카테고리 목록에는 초기 데이터 id 1–3만 있다.
+  - 이전 확인에서 등록한 테스트 카테고리 id 4도 로그인 토큰 없이 삭제했고, 204가 왔다. 지금 카테고리 목록에는 초기 데이터 id 1~3만 있다.
 - **이유가 코드에 있는지**: 없음.
   - `CategoryController`의 등록 `createCategory`(`src/main/java/gift/category/CategoryController.java:34-39`), 수정 `updateCategory`(`:41-54`), 삭제 `deleteCategory`(`:56-60`)는 모두 `Authorization` 헤더를 받지 않고 인증도 확인하지 않는다.
   - 1번과 원인이 같다. 공통 인증 장치가 없고, 인증을 일부러 뺐다는 주석도 없다.
@@ -280,6 +280,6 @@
 > 아래는 위 항목의 관련 파일을 읽다가 발견한 내용이다. **요청으로는 확인하지 않았고**, 사용자가 처음 준 목록에도 없다. 확인 대상인지부터 판단해 줘야 한다.
 
 > 지금 남은 AI 추정 항목은 없다. 모두 요청으로 확인해서 A 섹션으로 옮겼다.
-> - C-1 → A 섹션 11번(상품 삭제), 18번(상품 수정)
-> - C-2 → A 섹션 12번(재고 부족 주문)
-> - C-3 → A 섹션 13번(회원 목록 화면), 22번(회원 수정, 충전, 삭제)
+> - C-1은 A 섹션 11번(상품 삭제), 18번(상품 수정)으로 옮겼다.
+> - C-2는 A 섹션 12번(재고 부족 주문)으로 옮겼다.
+> - C-3은 A 섹션 13번(회원 목록 화면), 22번(회원 수정, 충전, 삭제)으로 옮겼다.
