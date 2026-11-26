@@ -16,23 +16,21 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/categories")
 public class CategoryController {
-    private final CategoryRepository categoryRepository;
+    private final CategoryService categoryService;
 
-    public CategoryController(CategoryRepository categoryRepository) {
-        this.categoryRepository = categoryRepository;
+    public CategoryController(CategoryService categoryService) {
+        this.categoryService = categoryService;
     }
 
     @GetMapping
     public ResponseEntity<List<CategoryResponse>> getCategories() {
-        List<CategoryResponse> categories = categoryRepository.findAll().stream()
-                .map(CategoryResponse::from)
-                .toList();
+        List<CategoryResponse> categories = categoryService.findCategories();
         return ResponseEntity.ok(categories);
     }
 
     @PostMapping
     public ResponseEntity<CategoryResponse> createCategory(@Valid @RequestBody CategoryRequest request) {
-        Category saved = categoryRepository.save(request.toEntity());
+        Category saved = categoryService.createCategory(request);
         return ResponseEntity.created(URI.create("/api/categories/" + saved.getId()))
                 .body(CategoryResponse.from(saved));
     }
@@ -40,19 +38,16 @@ public class CategoryController {
     @PutMapping("/{id}")
     public ResponseEntity<CategoryResponse> updateCategory(
             @PathVariable Long id, @Valid @RequestBody CategoryRequest request) {
-        Category category = categoryRepository.findById(id).orElse(null);
+        Category category = categoryService.updateCategory(id, request).orElse(null);
         if (category == null) {
             return ResponseEntity.notFound().build();
         }
-
-        category.update(request.name(), request.color(), request.imageUrl(), request.description());
-        categoryRepository.save(category);
         return ResponseEntity.ok(CategoryResponse.from(category));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
-        categoryRepository.deleteById(id);
+        categoryService.deleteCategory(id);
         return ResponseEntity.noContent().build();
     }
 }
