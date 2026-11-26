@@ -32,10 +32,7 @@ public class MemberSteps {
     @Given("^(user1|user2)의 포인트는 (?:그대로 )?([\\d,]+)이다$")
     public void pointIs(String member, String expected) {
         Integer point = jdbcTemplate.queryForObject(
-            "select point from member where email = ?",
-            Integer.class,
-            Members.email(member)
-        );
+                "select point from member where email = ?", Integer.class, Members.email(member));
         assertThat(point).isEqualTo(amount(expected));
     }
 
@@ -49,13 +46,10 @@ public class MemberSteps {
 
     @When("^비회원이 이메일 \"([^\"]*)\", 비밀번호 \"([^\"]*)\"로 회원 가입한다$")
     public void register(String email, String password) {
-        context.setLastResponse(
-            given()
-                .contentType(ContentType.JSON)
+        context.setLastResponse(given().contentType(ContentType.JSON)
                 .body(Map.of("email", email, "password", password))
-            .when()
-                .post("/api/members/register")
-        );
+                .when()
+                .post("/api/members/register"));
     }
 
     @Then("^응답에 로그인 토큰이 있다$")
@@ -67,14 +61,13 @@ public class MemberSteps {
     public void wishCountWithResponseToken(int expected) {
         String token = context.lastResponse().jsonPath().getString("token");
 
-        int total = given()
-            .header("Authorization", "Bearer " + token)
-        .when()
-            .get("/api/wishes")
-        .then()
-            .statusCode(200)
-            .extract()
-            .path("totalElements");
+        int total = given().header("Authorization", "Bearer " + token)
+                .when()
+                .get("/api/wishes")
+                .then()
+                .statusCode(200)
+                .extract()
+                .path("totalElements");
 
         assertThat(total).isEqualTo(expected);
     }
@@ -85,10 +78,9 @@ public class MemberSteps {
     }
 
     private Response login(String email, String password) {
-        return given()
-            .contentType(ContentType.JSON)
-            .body(Map.of("email", email, "password", password))
-        .when()
-            .post("/api/members/login");
+        return given().contentType(ContentType.JSON)
+                .body(Map.of("email", email, "password", password))
+                .when()
+                .post("/api/members/login");
     }
 }

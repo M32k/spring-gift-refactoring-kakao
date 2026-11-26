@@ -10,16 +10,13 @@ import java.util.Map;
  */
 public final class Members {
 
-    private record Account(String email, String password) {
-    }
+    private record Account(String email, String password) {}
 
     private static final Map<String, Account> ACCOUNTS = Map.of(
-        "user1", new Account("user1@example.com", "password1"),
-        "user2", new Account("user2@example.com", "password2")
-    );
+            "user1", new Account("user1@example.com", "password1"),
+            "user2", new Account("user2@example.com", "password2"));
 
-    private Members() {
-    }
+    private Members() {}
 
     public static String email(String alias) {
         return account(alias).email();
@@ -27,15 +24,14 @@ public final class Members {
 
     static String login(String alias) {
         Account account = account(alias);
-        return given()
-            .contentType(ContentType.JSON)
-            .body(Map.of("email", account.email(), "password", account.password()))
-        .when()
-            .post("/api/members/login")
-        .then()
-            .statusCode(200)
-            .extract()
-            .path("token");
+        return given().contentType(ContentType.JSON)
+                .body(Map.of("email", account.email(), "password", account.password()))
+                .when()
+                .post("/api/members/login")
+                .then()
+                .statusCode(200)
+                .extract()
+                .path("token");
     }
 
     private static Account account(String alias) {

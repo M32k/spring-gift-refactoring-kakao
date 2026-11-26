@@ -22,6 +22,6 @@ public class CucumberSpringConfiguration {
         RestAssured.port = port;
         // 한국어 상품명과 주문 메시지가 깨지지 않도록 요청 본문을 UTF-8로 보낸다.
         RestAssured.config = RestAssuredConfig.config()
-            .encoderConfig(EncoderConfig.encoderConfig().defaultContentCharset("UTF-8"));
+                .encoderConfig(EncoderConfig.encoderConfig().defaultContentCharset("UTF-8"));
     }
 }

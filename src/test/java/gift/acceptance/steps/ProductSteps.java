@@ -32,16 +32,18 @@ public class ProductSteps {
 
     @When("^로그인 토큰 없이 상품명 \"([^\"]*)\", 가격 ([\\d,]+)원, 카테고리 (\\d+)로 상품을 등록한다$")
     public void createProductWithoutLoginToken(String name, String price, long categoryId) {
-        Response response = given()
-            .contentType(ContentType.JSON)
-            .body(Map.of(
-                "name", name,
-                "price", amount(price),
-                "imageUrl", "https://example.com/a.png",
-                "categoryId", categoryId
-            ))
-        .when()
-            .post("/api/products");
+        Response response = given().contentType(ContentType.JSON)
+                .body(Map.of(
+                        "name",
+                        name,
+                        "price",
+                        amount(price),
+                        "imageUrl",
+                        "https://example.com/a.png",
+                        "categoryId",
+                        categoryId))
+                .when()
+                .post("/api/products");
         context.setLastResponse(response);
     }
 
@@ -64,12 +66,11 @@ public class ProductSteps {
     }
 
     private int productCount() {
-        return given()
-        .when()
-            .get("/api/products")
-        .then()
-            .statusCode(200)
-            .extract()
-            .path("totalElements");
+        return given().when()
+                .get("/api/products")
+                .then()
+                .statusCode(200)
+                .extract()
+                .path("totalElements");
     }
 }

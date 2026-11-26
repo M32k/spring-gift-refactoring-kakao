@@ -23,13 +23,12 @@ public class OrderSteps {
 
     @Given("^상품 (\\d+)의 옵션 (\\d+) 재고는 (?:그대로 )?(\\d+)(?:이다|다)$")
     public void stockIs(long productId, int optionId, int expected) {
-        JsonPath options = given()
-        .when()
-            .get("/api/products/{productId}/options", productId)
-        .then()
-            .statusCode(200)
-            .extract()
-            .jsonPath();
+        JsonPath options = given().when()
+                .get("/api/products/{productId}/options", productId)
+                .then()
+                .statusCode(200)
+                .extract()
+                .jsonPath();
 
         Integer stock = options.param("optionId", optionId).get("find { it.id == optionId }.quantity");
         assertThat(stock).as("상품 %d의 옵션 %d 재고", productId, optionId).isEqualTo(expected);
@@ -37,14 +36,13 @@ public class OrderSteps {
 
     @Given("^(user1|user2)의 주문 내역은 (?:그대로 )?(\\d+)건이다$")
     public void orderCountIs(String member, int expected) {
-        int total = given()
-            .header("Authorization", context.authorizationOf(member))
-        .when()
-            .get("/api/orders")
-        .then()
-            .statusCode(200)
-            .extract()
-            .path("totalElements");
+        int total = given().header("Authorization", context.authorizationOf(member))
+                .when()
+                .get("/api/orders")
+                .then()
+                .statusCode(200)
+                .extract()
+                .path("totalElements");
 
         assertThat(total).isEqualTo(expected);
     }
@@ -69,22 +67,15 @@ public class OrderSteps {
 
     @When("^(user1|user2)(?:이|가) 자기 로그인 토큰으로 주문 내역을 조회한다$")
     public void fetchOrders(String member) {
-        context.setLastResponse(
-            given()
-                .header("Authorization", context.authorizationOf(member))
-            .when()
-                .get("/api/orders")
-        );
+        context.setLastResponse(given().header("Authorization", context.authorizationOf(member))
+                .when()
+                .get("/api/orders"));
     }
 
     @When("^틀린 로그인 토큰으로 주문 내역을 조회한다$")
     public void fetchOrdersWithWrongToken() {
         context.setLastResponse(
-            given()
-                .header("Authorization", "Bearer wrong-token")
-            .when()
-                .get("/api/orders")
-        );
+                given().header("Authorization", "Bearer wrong-token").when().get("/api/orders"));
     }
 
     @When("^로그인 토큰 헤더 없이 주문 내역을 조회한다$")
@@ -94,9 +85,8 @@ public class OrderSteps {
 
     @Then("^응답의 주문 번호는 (\\d+(?:, \\d+)*)(?:이다|다)$")
     public void responseOrderIdsAre(String ids) {
-        List<Integer> expected = Arrays.stream(ids.split(", "))
-            .map(Integer::valueOf)
-            .toList();
+        List<Integer> expected =
+                Arrays.stream(ids.split(", ")).map(Integer::valueOf).toList();
         List<Integer> actual = context.lastResponse().jsonPath().getList("content.id", Integer.class);
 
         assertThat(actual).containsExactlyInAnyOrderElementsOf(expected);
@@ -111,14 +101,13 @@ public class OrderSteps {
     public void orderFromResponseIsInHistory(String member, long optionId, int quantity, String message) {
         int orderId = context.lastResponse().jsonPath().getInt("id");
 
-        JsonPath orders = given()
-            .header("Authorization", context.authorizationOf(member))
-        .when()
-            .get("/api/orders")
-        .then()
-            .statusCode(200)
-            .extract()
-            .jsonPath();
+        JsonPath orders = given().header("Authorization", context.authorizationOf(member))
+                .when()
+                .get("/api/orders")
+                .then()
+                .statusCode(200)
+                .extract()
+                .jsonPath();
 
         assertOrderInList(orders, orderId, optionId, quantity, message);
     }
@@ -132,13 +121,10 @@ public class OrderSteps {
     }
 
     private void placeOrder(String member, Map<String, Object> body) {
-        context.setLastResponse(
-            given()
-                .header("Authorization", context.authorizationOf(member))
+        context.setLastResponse(given().header("Authorization", context.authorizationOf(member))
                 .contentType(ContentType.JSON)
                 .body(body)
-            .when()
-                .post("/api/orders")
-        );
+                .when()
+                .post("/api/orders"));
     }
 }
