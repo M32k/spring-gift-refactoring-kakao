@@ -104,6 +104,7 @@ Java 포매터를 적용하고, 코드 이름을 용어 사전에 맞추는 작�
 ### N7. 주석의 토큰 용어
 
 - `TokenResponse`의 "JWT access token"과 `KakaoAuthController`의 "issues a service JWT"를 "login token (JWT)"로 바꾼다. 주석은 영어로 둔다.
+- `KakaoAuthController`의 "exchanges it for an access token"도 "exchanges it for a Kakao access token"으로 바꿨다. 카카오 액세스 토큰과 로그인 토큰을 구분하려고.
 - 바꾸는 파일: `src/main/java/gift/auth/TokenResponse.java`, `src/main/java/gift/auth/KakaoAuthController.java`
 - 확인 명령: `./gradlew build`
 - 커밋 메시지 예: `style: 주석의 토큰 용어를 로그인 토큰으로 맞춤`

@@ -1,7 +1,7 @@
 package gift.auth;
 
 /**
- * Response containing a JWT access token.
+ * Response containing a login token (JWT).
  *
  * @author brian.kim
  * @since 1.0

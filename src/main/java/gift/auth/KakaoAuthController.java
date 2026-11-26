@@ -14,8 +14,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 /*
  * Handles the Kakao OAuth2 login flow.
  * 1. /login redirects the user to Kakao's authorization page
- * 2. /callback receives the authorization code, exchanges it for an access token,
- *    retrieves user info, auto-registers the member if new, and issues a service JWT
+ * 2. /callback receives the authorization code, exchanges it for a Kakao access token,
+ *    retrieves user info, auto-registers the member if new, and issues a login token (JWT)
  */
 @RestController
 @RequestMapping(path = "/api/auth/kakao")
