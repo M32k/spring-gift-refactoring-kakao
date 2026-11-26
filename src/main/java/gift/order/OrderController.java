@@ -77,7 +77,7 @@ public class OrderController {
         }
 
         // subtract stock
-        option.subtractQuantity(request.quantity());
+        option.subtractStock(request.quantity());
         optionRepository.save(option);
 
         // deduct points
