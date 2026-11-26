@@ -1,9 +1,7 @@
 package gift.order;
 
 import gift.auth.AuthenticationResolver;
-import gift.member.Member;
 import gift.member.MemberRepository;
-import gift.option.Option;
 import gift.option.OptionRepository;
 import jakarta.validation.Valid;
 import java.net.URI;
@@ -66,20 +64,7 @@ public class OrderController {
             return ResponseEntity.notFound().build();
         }
 
-        // best-effort kakao notification
-        sendOrderNotificationIfPossible(member, saved, saved.getOption());
         return ResponseEntity.created(URI.create("/api/orders/" + saved.getId()))
                 .body(OrderResponse.from(saved));
-    }
-
-    private void sendOrderNotificationIfPossible(Member member, Order order, Option option) {
-        if (member.getKakaoAccessToken() == null) {
-            return;
-        }
-        try {
-            var product = option.getProduct();
-            kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, product);
-        } catch (Exception ignored) {
-        }
     }
 }

@@ -2,6 +2,7 @@ package gift.order;
 
 import gift.member.Member;
 import gift.member.MemberRepository;
+import gift.option.Option;
 import gift.option.OptionRepository;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
@@ -13,12 +14,17 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OptionRepository optionRepository;
     private final MemberRepository memberRepository;
+    private final KakaoMessageClient kakaoMessageClient;
 
     public OrderService(
-            OrderRepository orderRepository, OptionRepository optionRepository, MemberRepository memberRepository) {
+            OrderRepository orderRepository,
+            OptionRepository optionRepository,
+            MemberRepository memberRepository,
+            KakaoMessageClient kakaoMessageClient) {
         this.orderRepository = orderRepository;
         this.optionRepository = optionRepository;
         this.memberRepository = memberRepository;
+        this.kakaoMessageClient = kakaoMessageClient;
     }
 
     public Page<OrderResponse> findOrders(Long memberId, Pageable pageable) {
@@ -33,7 +39,6 @@ public class OrderService {
     // 5. save order
     // 6. cleanup wish
     // 7. send kakao notification
-
     public Optional<Order> createOrder(Member member, OrderRequest request) {
         // validate option
         var option = optionRepository.findById(request.optionId()).orElse(null);
@@ -52,6 +57,20 @@ public class OrderService {
 
         // save order
         var saved = orderRepository.save(new Order(option, member.getId(), request.quantity(), request.message()));
+
+        // best-effort kakao notification
+        sendOrderNotificationIfPossible(member, saved, option);
         return Optional.of(saved);
+    }
+
+    private void sendOrderNotificationIfPossible(Member member, Order order, Option option) {
+        if (member.getKakaoAccessToken() == null) {
+            return;
+        }
+        try {
+            var product = option.getProduct();
+            kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, product);
+        } catch (Exception ignored) {
+        }
     }
 }
