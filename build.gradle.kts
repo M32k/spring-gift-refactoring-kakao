@@ -46,6 +46,7 @@ dependencies {
     testImplementation("io.cucumber:cucumber-junit-platform-engine")
     testImplementation("org.junit.platform:junit-platform-suite")
     testImplementation("io.rest-assured:rest-assured")
+    testImplementation("com.tngtech.archunit:archunit-junit5:1.3.0")
 }
 
 kotlin {

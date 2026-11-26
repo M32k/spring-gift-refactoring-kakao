@@ -73,7 +73,7 @@
 
 - 규칙 0: Repository는 Controller에 의존하지 않는다. 지금 코드에서 통과해야 한다.
 - 바꾸는 파일
-  - `build.gradle.kts`: `testImplementation("com.tngtech.archunit:archunit-junit5:<버전>")`(버전은 넣을 때 확인)
+  - `build.gradle.kts`: `testImplementation("com.tngtech.archunit:archunit-junit5:1.3.0")`
   - `src/test/java/gift/architecture/LayerArchitectureTest.java`(새 파일)
 - 확인 명령: ArchUnit, 인수 테스트
 - 커밋 메시지 예: `test: ArchUnit 계층 규칙 추가`
