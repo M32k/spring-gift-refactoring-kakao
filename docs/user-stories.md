@@ -28,8 +28,14 @@
 
 ## 2. 비회원은 이메일과 비밀번호로 로그인한다 (왜: 확인 필요)
 - API: `POST /api/members/login`
-- 확인한 응답: 200, token
+- 확인한 응답:
+  - 성공: 200, token
+  - 비밀번호 틀림, 없는 이메일: 400, 본문 "Invalid email or password." (둘이 같다)
 - 비고: 비밀번호를 평문으로 비교한다(open-questions 7번)
+
+### 인수 조건
+
+인수 조건: `src/test/resources/features/login.feature` (2-1~2-3)
 
 ## 3. 비회원은 카카오 계정으로 로그인한다 (왜: 확인 필요)
 - API: `GET /api/auth/kakao/login`, `GET /api/auth/kakao/callback`

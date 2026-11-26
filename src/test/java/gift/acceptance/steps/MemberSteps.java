@@ -52,6 +52,11 @@ public class MemberSteps {
                 .post("/api/members/register"));
     }
 
+    @When("^비회원이 이메일 \"([^\"]*)\", 비밀번호 \"([^\"]*)\"로 로그인한다$")
+    public void loginAsGuest(String email, String password) {
+        context.setLastResponse(login(email, password));
+    }
+
     @Then("^응답에 로그인 토큰이 있다$")
     public void responseHasLoginToken() {
         assertThat(context.lastResponse().jsonPath().getString("token")).isNotBlank();
