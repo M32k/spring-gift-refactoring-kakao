@@ -74,6 +74,7 @@ IDE나 컴파일러가 "미사용"으로 보는 코드를 지우는 작업이다
 - 대상: `MemberController.java:27`, `AdminMemberController.java:23`. 근거는 U4와 같다.
 - `AdminMemberController`에는 인수 테스트가 없다. 인수 테스트가 돌면 앱이 떴다는 뜻이고, 앱이 떴으면 주입도 된 것이다.
 - blame: `src/main/java/gift/member/MemberController.java:27`, `src/main/java/gift/member/AdminMemberController.java:23`
+- blame 결과: 두 파일의 `@Autowired`와 import 모두 `55ca9e4` 'feat: set up the project'에서 들어왔다. 넣은 이유는 커밋에 없다. 이 커밋으로 `src/main`에 `@Autowired`가 남지 않는다.
 - 바꾸는 파일: `src/main/java/gift/member/MemberController.java`, `src/main/java/gift/member/AdminMemberController.java`
 - 확인 명령: 인수 테스트(1-1~1-3)
 - 커밋 메시지 예: `refactor: member 패키지에서 불필요한 @Autowired 제거`
