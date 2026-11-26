@@ -57,8 +57,12 @@
 
 ## 5. 비회원은 카테고리 목록을 본다 (왜: 확인 필요)
 - API: `GET /api/categories`
-- 확인한 응답: 200
+- 확인한 응답: 200, 카테고리 id·이름·색·이미지 URL·설명
 - 비고: 없음
+
+### 인수 조건
+
+인수 조건: `src/test/resources/features/category-list.feature` (5-1)
 
 ## 6. 비회원은 상품의 옵션 목록을 본다 (왜: 확인 필요)
 - API: `GET /api/products/{productId}/options`
