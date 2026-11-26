@@ -9,6 +9,8 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import io.restassured.http.ContentType;
 import io.restassured.path.json.JsonPath;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 public class OrderSteps {
@@ -63,6 +65,70 @@ public class OrderSteps {
         assertThat(body.getLong("optionId")).isEqualTo(optionId);
         assertThat(body.getInt("quantity")).isEqualTo(quantity);
         assertThat(body.getString("message")).isEqualTo(message);
+    }
+
+    @When("^(user1|user2)(?:이|가) 자기 로그인 토큰으로 주문 내역을 조회한다$")
+    public void fetchOrders(String member) {
+        context.setLastResponse(
+            given()
+                .header("Authorization", context.authorizationOf(member))
+            .when()
+                .get("/api/orders")
+        );
+    }
+
+    @When("^틀린 로그인 토큰으로 주문 내역을 조회한다$")
+    public void fetchOrdersWithWrongToken() {
+        context.setLastResponse(
+            given()
+                .header("Authorization", "Bearer wrong-token")
+            .when()
+                .get("/api/orders")
+        );
+    }
+
+    @When("^로그인 토큰 헤더 없이 주문 내역을 조회한다$")
+    public void fetchOrdersWithoutHeader() {
+        context.setLastResponse(given().when().get("/api/orders"));
+    }
+
+    @Then("^응답의 주문 번호는 (\\d+(?:, \\d+)*)(?:이다|다)$")
+    public void responseOrderIdsAre(String ids) {
+        List<Integer> expected = Arrays.stream(ids.split(", "))
+            .map(Integer::valueOf)
+            .toList();
+        List<Integer> actual = context.lastResponse().jsonPath().getList("content.id", Integer.class);
+
+        assertThat(actual).containsExactlyInAnyOrderElementsOf(expected);
+    }
+
+    @Then("^응답의 주문 (\\d+)(?:은|는) 옵션 (\\d+), 주문 수량 (\\d+), 주문 메시지 \"([^\"]*)\"(?:이다|다)$")
+    public void responseOrderInListIs(int orderId, long optionId, int quantity, String message) {
+        assertOrderInList(context.lastResponse().jsonPath(), orderId, optionId, quantity, message);
+    }
+
+    @Then("^(user1|user2)의 주문 내역에 응답의 주문이 옵션 (\\d+), 주문 수량 (\\d+), 주문 메시지 \"([^\"]*)\"로 있다$")
+    public void orderFromResponseIsInHistory(String member, long optionId, int quantity, String message) {
+        int orderId = context.lastResponse().jsonPath().getInt("id");
+
+        JsonPath orders = given()
+            .header("Authorization", context.authorizationOf(member))
+        .when()
+            .get("/api/orders")
+        .then()
+            .statusCode(200)
+            .extract()
+            .jsonPath();
+
+        assertOrderInList(orders, orderId, optionId, quantity, message);
+    }
+
+    private void assertOrderInList(JsonPath orders, int orderId, long optionId, int quantity, String message) {
+        Map<String, Object> order = orders.param("orderId", orderId).get("content.find { it.id == orderId }");
+        assertThat(order).as("주문 %d", orderId).isNotNull();
+        assertThat(((Number) order.get("optionId")).longValue()).isEqualTo(optionId);
+        assertThat(((Number) order.get("quantity")).intValue()).isEqualTo(quantity);
+        assertThat(order.get("message")).isEqualTo(message);
     }
 
     private void placeOrder(String member, Map<String, Object> body) {

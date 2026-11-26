@@ -10,7 +10,7 @@
   - 비회원: 로그인 토큰 없이 쓰도록 만든 기능
 - **왜**는 코드에 목적이 적혀 있을 때만 쓰고 근거를 비고에 붙인다. 코드로 알 수 없으면 "왜: 확인 필요"라고 적는다.
 - **확인한 응답**에는 요청으로 직접 확인한 결과만 적는다. 확인하지 않은 API는 "아직 확인 안 함"으로 둔다.
-- **인수 조건** 본문은 `src/test/resources/features/`의 feature 파일에만 있다. 여기에는 feature 파일 위치와 시나리오 번호만 적는다. 지금 인수 조건이 있는 스토리는 7, 15, 16번이다.
+- **인수 조건** 본문은 `src/test/resources/features/`의 feature 파일에만 있다. 여기에는 feature 파일 위치와 시나리오 번호만 적는다. 지금 인수 조건이 있는 스토리는 1, 7, 15, 16, 17번이다.
 - 비고의 "open-questions N번"은 [`docs/open-questions.md`](open-questions.md)의 항목 번호다.
 
 ---
@@ -21,6 +21,10 @@
   - 새 이메일: 201, token
   - 이미 가입한 이메일: 400
 - 비고: 가입하면 바로 로그인 토큰을 준다
+
+### 인수 조건
+
+인수 조건: `src/test/resources/features/member.feature` (1-1~1-3)
 
 ## 2. 비회원은 이메일과 비밀번호로 로그인한다 (왜: 확인 필요)
 - API: `POST /api/members/login`
@@ -124,6 +128,10 @@
 - API: `GET /api/orders`
 - 확인한 응답: 200, 성공한 주문만 보이고 실패한 주문은 없음
 - 비고: 없음
+
+### 인수 조건
+
+인수 조건: `src/test/resources/features/order-history.feature` (17-1~17-4)
 
 ## 18. 관리자는 상품 목록 화면을 본다 (왜: 확인 필요)
 - API: `GET /admin/products`
