@@ -18,9 +18,28 @@ import java.util.Map;
 public class ProductSteps {
 
     private final ScenarioContext context;
+    private Long createdProductId;
 
     public ProductSteps(ScenarioContext context) {
         this.context = context;
+    }
+
+    @When("^로그인 토큰 없이 상품 (\\d+)(?:을|를) 삭제한다$")
+    public void deleteProductWithoutLoginToken(long id) {
+        context.setLastResponse(given().when().delete("/api/products/{id}", id));
+    }
+
+    @When("^로그인 토큰 없이 방금 등록한 상품을 삭제한다$")
+    public void deleteCreatedProductWithoutLoginToken() {
+        createdProductId = context.lastResponse().jsonPath().getLong("id");
+        context.setLastResponse(given().when().delete("/api/products/{id}", createdProductId));
+    }
+
+    @Then("^방금 등록한 상품을 조회하면 404가 온다$")
+    public void createdProductIsNotFound() {
+        assertThat(createdProductId).as("방금 등록한 상품 번호").isNotNull();
+        assertThat(given().when().get("/api/products/{id}", createdProductId).statusCode())
+                .isEqualTo(404);
     }
 
     @Given("^상품이 (\\d+)개 있다$")

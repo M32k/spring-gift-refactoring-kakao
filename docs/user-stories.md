@@ -92,6 +92,10 @@
 - 확인한 응답: 204, 다시 조회하면 404
 - 비고: 실제로는 로그인 토큰 없이 누구나 할 수 있다(open-questions 11번)
 
+### 인수 조건
+
+인수 조건: `src/test/resources/features/product-delete.feature` (9-1~9-4)
+
 ## 10. 관리자는 카테고리를 등록, 수정, 삭제한다 (왜: 확인 필요)
 - API: `POST /api/categories`, `PUT /api/categories/{id}`, `DELETE /api/categories/{id}`
 - 확인한 응답:
