@@ -191,6 +191,7 @@
 - **이유가 코드에 있는지**: 없음.
   - `ProductController.updateProduct`(`src/main/java/gift/product/ProductController.java:62-82`)는 `Authorization` 헤더를 받지 않고 인증도 확인하지 않는다.
   - 1번, 11번과 원인이 같다. 인증을 일부러 뺐다는 주석은 없다.
+- **인수 테스트**: `src/test/resources/features/product-update.feature` 8-1 (로그인 토큰 없이 수정되는 지금 작동)
 - **상태**: 미결정
 
 ### 19. 관리자 화면에서 포인트를 0이나 음수로 충전하면 500이 온다
@@ -214,6 +215,7 @@
   - 다르게 처리하는 코드: API는 `validate(name)`(`src/main/java/gift/product/ProductController.java:91`)를 호출하고, 이 메서드는 `allowKakao = false`로 검사한다(`ProductNameValidator.java:15-17`). 관리자 화면은 `validate(name, true)`로 허용한다(`src/main/java/gift/product/AdminProductController.java:47,80`).
   - 관리자 화면이 "MD와 협의한 경우"에 해당한다는 설명은 코드에 없다. 관리자 화면에서 등록하면 협의를 거친 것으로 보는지는 확인이 필요하다.
   - 참고: API의 상품 등록과 수정은 로그인 토큰 없이 된다(1번, 18번). `AdminProductController`에도 인증 확인 코드가 없다. 그래서 "카카오" 상품명 말고는 API와 관리자 화면 사이에 권한 차이가 없을 것으로 보인다. 관리자 상품 화면이 로그인 없이 열리는지는 요청으로 확인하지 않았다.
+- **인수 테스트**: `src/test/resources/features/product-update.feature` 8-3 (API로 수정할 때 "카카오" 상품명을 막는 지금 작동)
 - **상태**: 미결정
 
 ### 21. 관리자 화면에서 이미 삭제한 회원을 수정하면 404가 아니라 500이 온다

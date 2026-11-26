@@ -68,6 +68,32 @@ public class ProductSteps {
         assertThat(response.jsonPath().getInt("price")).isEqualTo(amount(price));
     }
 
+    @When("^로그인 토큰 없이 상품 (\\d+)(?:을|를) 상품명 \"([^\"]*)\", 가격 ([\\d,]+)원, 카테고리 (\\d+)(?:으로|로) 수정한다$")
+    public void updateProductWithoutLoginToken(long id, String name, String price, long categoryId) {
+        Response response = given().contentType(ContentType.JSON)
+                .body(Map.of(
+                        "name",
+                        name,
+                        "price",
+                        amount(price),
+                        "imageUrl",
+                        "https://example.com/a.png",
+                        "categoryId",
+                        categoryId))
+                .when()
+                .put("/api/products/{id}", id);
+        context.setLastResponse(response);
+    }
+
+    @Then("^상품 (\\d+)(?:을|를) 조회하면 상품명 \"([^\"]*)\", 가격 ([\\d,]+)원이 온다$")
+    public void productCanBeFetched(long id, String name, String price) {
+        Response response = given().when().get("/api/products/{id}", id);
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.jsonPath().getString("name")).isEqualTo(name);
+        assertThat(response.jsonPath().getInt("price")).isEqualTo(amount(price));
+    }
+
     @When("^비회원이 상품 목록을 조회한다$")
     public void fetchProducts() {
         context.setLastResponse(given().when().get("/api/products"));
