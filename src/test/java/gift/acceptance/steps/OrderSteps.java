@@ -47,7 +47,7 @@ public class OrderSteps {
         assertThat(total).isEqualTo(expected);
     }
 
-    @When("^(user1|user2)(?:이|가) 옵션 (\\d+)(?:을|를) 주문 수량 (\\d+)로 주문한다$")
+    @When("^(user1|user2)(?:이|가) 옵션 (\\d+)(?:을|를) 주문 수량 (\\d+)(?:으로|로) 주문한다$")
     public void order(String member, long optionId, int quantity) {
         placeOrder(member, Map.of("optionId", optionId, "quantity", quantity));
     }
@@ -55,6 +55,23 @@ public class OrderSteps {
     @When("^(user1|user2)(?:이|가) 옵션 (\\d+)(?:을|를) 주문 수량 (\\d+), 주문 메시지 \"([^\"]*)\"로 주문한다$")
     public void orderWithMessage(String member, long optionId, int quantity, String message) {
         placeOrder(member, Map.of("optionId", optionId, "quantity", quantity, "message", message));
+    }
+
+    @When("^틀린 로그인 토큰으로 옵션 (\\d+)(?:을|를) 주문 수량 (\\d+)(?:으로|로) 주문한다$")
+    public void orderWithWrongToken(long optionId, int quantity) {
+        context.setLastResponse(given().header("Authorization", "Bearer wrong-token")
+                .contentType(ContentType.JSON)
+                .body(Map.of("optionId", optionId, "quantity", quantity))
+                .when()
+                .post("/api/orders"));
+    }
+
+    @When("^로그인 토큰 헤더 없이 옵션 (\\d+)(?:을|를) 주문 수량 (\\d+)(?:으로|로) 주문한다$")
+    public void orderWithoutHeader(long optionId, int quantity) {
+        context.setLastResponse(given().contentType(ContentType.JSON)
+                .body(Map.of("optionId", optionId, "quantity", quantity))
+                .when()
+                .post("/api/orders"));
     }
 
     @Then("^응답의 주문은 옵션 (\\d+), 주문 수량 (\\d+), 주문 메시지 \"([^\"]*)\"(?:이다|다)$")

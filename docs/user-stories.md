@@ -122,7 +122,7 @@
 
 ### 인수 조건
 
-인수 조건: `src/test/resources/features/order.feature` (16-1~16-3)
+인수 조건: `src/test/resources/features/order.feature` (16-1~16-7)
 
 ## 17. 회원은 자기 주문 내역을 본다 (왜: 확인 필요)
 - API: `GET /api/orders`

@@ -13,7 +13,7 @@ public class CommonSteps {
         this.context = context;
     }
 
-    @Then("^(\\d+)이 온다$")
+    @Then("^(\\d+)(?:이|가) 온다$")
     public void statusIs(int status) {
         assertThat(context.lastResponse().statusCode()).isEqualTo(status);
     }
