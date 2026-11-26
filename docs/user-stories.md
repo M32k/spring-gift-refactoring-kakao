@@ -47,7 +47,13 @@
 - 확인한 응답:
   - `GET /api/products`: 200
   - `GET /api/products/{id}`: 200, 상품명과 가격
+  - 쪽 크기 2: content 2개, 전체 6개, 3쪽
+  - 없는 상품: 404(본문 없음)
 - 비고: 없음
+
+### 인수 조건
+
+인수 조건: `src/test/resources/features/product-view.feature` (4-1~4-4)
 
 ## 5. 비회원은 카테고리 목록을 본다 (왜: 확인 필요)
 - API: `GET /api/categories`

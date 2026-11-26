@@ -9,7 +9,10 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import io.restassured.http.ContentType;
+import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 public class ProductSteps {
@@ -63,6 +66,44 @@ public class ProductSteps {
         assertThat(response.statusCode()).isEqualTo(200);
         assertThat(response.jsonPath().getString("name")).isEqualTo(name);
         assertThat(response.jsonPath().getInt("price")).isEqualTo(amount(price));
+    }
+
+    @When("^비회원이 상품 목록을 조회한다$")
+    public void fetchProducts() {
+        context.setLastResponse(given().when().get("/api/products"));
+    }
+
+    @When("^비회원이 상품 목록을 (\\d+)쪽, 쪽 크기 (\\d+)(?:으로|로) 조회한다$")
+    public void fetchProductsPage(int page, int size) {
+        context.setLastResponse(
+                given().queryParam("page", page).queryParam("size", size).when().get("/api/products"));
+    }
+
+    @Then("^응답의 상품 번호는 (\\d+(?:, \\d+)*)(?:이다|다)$")
+    public void responseProductIdsAre(String ids) {
+        List<Integer> expected =
+                Arrays.stream(ids.split(", ")).map(Integer::valueOf).toList();
+        List<Integer> actual = context.lastResponse().jsonPath().getList("content.id", Integer.class);
+
+        assertThat(actual).containsExactlyInAnyOrderElementsOf(expected);
+    }
+
+    @Then("^응답의 상품은 (\\d+)개, 전체 상품은 (\\d+)개, 전체 쪽은 (\\d+)쪽이다$")
+    public void responsePageIs(int contentSize, int totalElements, int totalPages) {
+        JsonPath body = context.lastResponse().jsonPath();
+        assertThat(body.getList("content")).hasSize(contentSize);
+        assertThat(body.getInt("totalElements")).isEqualTo(totalElements);
+        assertThat(body.getInt("totalPages")).isEqualTo(totalPages);
+    }
+
+    @When("^비회원이 상품 (\\d+)(?:을|를) 조회한다$")
+    public void fetchProduct(long id) {
+        context.setLastResponse(given().when().get("/api/products/{id}", id));
+    }
+
+    @Then("^응답의 카테고리는 (\\d+)(?:이다|다)$")
+    public void responseCategoryIs(long categoryId) {
+        assertThat(context.lastResponse().jsonPath().getLong("categoryId")).isEqualTo(categoryId);
     }
 
     private int productCount() {
