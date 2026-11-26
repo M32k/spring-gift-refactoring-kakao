@@ -30,6 +30,7 @@ IDE나 컴파일러가 "미사용"으로 보는 코드를 지우는 작업이다
 - 같은 커밋에서 `docs/open-questions.md` 9번의 상태 줄을 다음으로 고친다. 번호는 그대로 둔다.
   - `- **상태**: 3단계에서 지움, 근거는 05-service-layer/tasks.md 작동 변경 후보`
 - blame: `src/main/java/gift/order/OrderController.java:8,26,34,41,61-68`
+- blame 결과: 다섯 줄(import, 필드, 매개변수, 대입, 주석 `// 6. cleanup wish`) 모두 `55ca9e4` 'feat: set up the project'에서 함께 들어왔다. 프로젝트 초기 세팅 커밋(파일 62개)이고 본문이 없어 넣은 이유는 알 수 없다. 같은 커밋의 `// 6. cleanup wish` 주석만이 단서다.
 - 바꾸는 파일: `src/main/java/gift/order/OrderController.java`, `docs/open-questions.md`
 - 확인 명령: 인수 테스트(16, 17)
 - 커밋 메시지 예: `refactor: OrderController에서 쓰지 않는 WishRepository 제거`
