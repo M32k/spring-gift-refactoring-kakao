@@ -53,6 +53,7 @@ IDE나 컴파일러가 "미사용"으로 보는 코드를 지우는 작업이다
 - 주석: `// primitive FK`(`Order.java:24`). 필드에 붙은 주석이라 그대로 둔다.
 - 4단계와 충돌하는지: 주문 상세에서 소유자를 확인하게 되면 다시 필요하다.
 - blame: `src/main/java/gift/order/Order.java:24-25,49-51`
+- blame 결과: 필드 `memberId`와 `getMemberId()` 모두 `55ca9e4` 'feat: set up the project'에서 들어왔다. 넣은 이유는 커밋에 없다. `OrderRepository.findByMemberId`는 필드 이름으로 조회하므로 getter와 상관없다.
 - 바꾸는 파일: `src/main/java/gift/order/Order.java`
 - 확인 명령: 인수 테스트(17-1)
 - 커밋 메시지 예: `refactor: 쓰지 않는 Order.getMemberId 제거`
