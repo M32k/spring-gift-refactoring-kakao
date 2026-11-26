@@ -52,14 +52,6 @@ public class OrderController {
         return ResponseEntity.ok(orders);
     }
 
-    // order flow:
-    // 1. auth check
-    // 2. validate option
-    // 3. subtract stock
-    // 4. deduct points
-    // 5. save order
-    // 6. cleanup wish
-    // 7. send kakao notification
     @PostMapping
     public ResponseEntity<?> createOrder(
             @RequestHeader("Authorization") String authorization, @Valid @RequestBody OrderRequest request) {
@@ -69,26 +61,13 @@ public class OrderController {
             return ResponseEntity.status(401).build();
         }
 
-        // validate option
-        var option = optionRepository.findById(request.optionId()).orElse(null);
-        if (option == null) {
+        var saved = orderService.createOrder(member, request).orElse(null);
+        if (saved == null) {
             return ResponseEntity.notFound().build();
         }
 
-        // subtract stock
-        option.subtractStock(request.quantity());
-        optionRepository.save(option);
-
-        // deduct points
-        var totalPrice = option.getProduct().getPrice() * request.quantity();
-        member.deductPoint(totalPrice);
-        memberRepository.save(member);
-
-        // save order
-        var saved = orderRepository.save(new Order(option, member.getId(), request.quantity(), request.message()));
-
         // best-effort kakao notification
-        sendOrderNotificationIfPossible(member, saved, option);
+        sendOrderNotificationIfPossible(member, saved, saved.getOption());
         return ResponseEntity.created(URI.create("/api/orders/" + saved.getId()))
                 .body(OrderResponse.from(saved));
     }
