@@ -88,7 +88,7 @@
 - 확인 명령: ArchUnit(실패가 맞다)
 - 커밋 메시지 예: `docs: ArchUnit 컨트롤러 규칙의 추출 전 실패 결과 기록`
 
-**A2 결과**: (아직 실행 안 함)
+**A2 결과**(2026-11-26, A1 커밋 `ef45559` 상태): 규칙 0은 통과, 규칙 A는 실패했다. 위반 62건, 위반한 컨트롤러 7개(CategoryController, MemberController, OptionController, OrderController, ProductController, WishController, KakaoAuthController). AdminProductController와 AdminMemberController는 규칙에서 빼서 나오지 않았다. 규칙 A가 실제로 검사하는 것을 확인했다.
 
 ---
 
