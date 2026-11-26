@@ -62,8 +62,12 @@
 
 ## 6. 비회원은 상품의 옵션 목록을 본다 (왜: 확인 필요)
 - API: `GET /api/products/{productId}/options`
-- 확인한 응답: 200, 옵션 id와 재고
+- 확인한 응답: 200, 옵션 id·이름·재고 / 없는 상품: 404
 - 비고: 없음
+
+### 인수 조건
+
+인수 조건: `src/test/resources/features/option-list.feature` (6-1~6-2)
 
 ## 7. 관리자는 상품을 등록한다 (왜: 확인 필요)
 - API: `POST /api/products`
