@@ -243,6 +243,20 @@
   - 참고: 누구나 회원의 이메일과 비밀번호를 바꾸고, 포인트를 충전하고, 회원을 삭제할 수 있다.
 - **상태**: 미결정
 
+### 24. 위시에 담긴 상품이나 주문이 있는 옵션을 가진 상품을 삭제하면 500이 온다
+
+> 23번은 B 섹션(코드로만 확인)에 있다. 이 항목은 요청으로 확인해서 A 섹션에 24번으로 붙였다.
+
+- **작동**: 위시에 담긴 상품(또는 주문이 있는 옵션을 가진 상품)을 삭제하면 500이 온다. 상품, 옵션, 위시는 그대로다.
+- **확인한 방법**: 직접 curl로 확인함. 앱을 새로 켜서 초기 데이터로 되돌린 뒤 상품 1(user1의 위시 1에 들어 있음)을 삭제하자 500(Spring 기본 오류 JSON)이 왔다. 그 뒤 상품 1, 옵션 1·2(재고 10, 5), user1의 위시 2개가 모두 그대로였다.
+- **이유가 코드에 있는지**: 없음. 작동을 만드는 코드는 다음과 같다.
+  - `wish.product_id`, `orders.option_id` 외래 키에 `ON DELETE`가 없다(`src/main/resources/db/migration/V1__Initialize_project_tables.sql:35,55`).
+  - `ProductController.deleteProduct`는 위시나 주문이 있는지 확인하지 않고 바로 `productRepository.deleteById(id)`를 부른다(`src/main/java/gift/product/ProductController.java:82-83`).
+  - 이 예외를 처리하는 곳이 없어서 500이 된다. `ProductController`의 `@ExceptionHandler`는 `IllegalArgumentException`만 처리하고, 프로젝트에 `@ControllerAdvice`도 없다.
+  - 옵션은 `Product.options`의 `cascade`로 함께 지워지려 하지만(`src/main/java/gift/product/Product.java:30`), 삭제가 실패하면서 함께 되돌려진다.
+- **인수 테스트**: `src/test/resources/features/product-delete.feature` 9-3 (500, 상품·옵션·위시 그대로)
+- **상태**: 미결정
+
 ---
 
 ## B. 코드를 읽어서 확인한 작동 (요청으로는 아직 확인 안 함)
