@@ -64,6 +64,7 @@ IDE나 컴파일러가 "미사용"으로 보는 코드를 지우는 작업이다
 - 대상: `AuthenticationResolver.java:19`, `JwtProvider.java:23`
 - 주석, TODO: 없음. 4단계와 충돌: 없음.
 - blame: `src/main/java/gift/auth/AuthenticationResolver.java:19`, `src/main/java/gift/auth/JwtProvider.java:23`
+- blame 결과: 두 파일의 `@Autowired`와 import 모두 `55ca9e4` 'feat: set up the project'에서 들어왔다. 넣은 이유는 커밋에 없다.
 - 바꾸는 파일: `src/main/java/gift/auth/AuthenticationResolver.java`, `src/main/java/gift/auth/JwtProvider.java`
 - 확인 명령: 인수 테스트 전체(로그인 토큰을 쓰는 시나리오 모두)
 - 커밋 메시지 예: `refactor: auth 패키지에서 불필요한 @Autowired 제거`
