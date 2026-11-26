@@ -22,9 +22,20 @@
 | `admin`, `Admin*Controller` | 이름만 관리자용이다. `/admin/**`에는 권한 확인이 없다. 초기 데이터의 `admin@example.com`도 일반 회원이다. | `member/AdminMemberController.java`, `product/AdminProductController.java` |
 | 회원 id와 `user` 번호 | 초기 데이터의 `user1@example.com`은 회원 id 2이고, `user2@example.com`은 회원 id 3이다. id 1은 admin이다. | `db/migration/V2__Insert_default_data.sql` |
 
+## 3단계 작업 규칙 (구조 변경)
+
+- 이 단계의 커밋은 모두 구조 변경이다. 같은 요청에 대한 응답(상태 코드, 응답 본문, 실패 뒤 상태)이 바뀌면 안 된다.
+- 구조 변경과 작동 변경을 한 커밋에 섞지 않는다. 둘 다 필요하면 구조를 먼저 바꾼다.
+- 인수 테스트를 고치거나 끄지 않는다. 바꿀 때마다 인수 테스트를 돌리고, 통과한 상태로만 커밋한다.
+- 코드를 고치기 전에, 지금 할 한 가지가 그 작업의 `docs/work/<번호>-<작업>/tasks.md`에 적혀 있어야 한다. 한 번에 한 항목만 바꾼다.
+- 버그나 작동 변경 후보를 찾으면 고치지 않고 tasks.md의 "작동 변경 후보"에 적는다. 4단계(작동 변경)에서 다시 연다.
+- 작동을 바꾸기 쉬운 줄은 건드리지 않는다: `@Valid`, `@Transactional`, `@ExceptionHandler`를 더하거나 빼지 않고, `orElse(null)`과 404 응답을 예외로 바꾸지 않으며, 응답 DTO의 필드 이름을 바꾸지 않는다.
+- 요청하지 않은 변경은 하지 않는다: Lombok 도입, 패키지 재편, 새 아키텍처 패턴, 라이브러리나 Java 버전 업그레이드. 필요해 보이면 tasks.md에 적고 묻는다.
+- 커밋 메시지에 구조 변경임을 밝힌다(`refactor:`, `style:`). 한 줄로 설명할 수 없으면 더 쪼갠다.
+- `/acceptance-test` 스킬은 단계와 상관없이 `src/main`을 고치지 않는다.
+
 ## 저장소에 없는 결정
 
-- 지금(1·2단계)은 분석과 인수 테스트만 한다. `src/main`은 고치지 않는다. 리팩터링 목표는 나중에 정한다.
 - 현재 동작은 버그처럼 보여도 그대로 둔다. 이상한 동작은 `docs/open-questions.md`에 기록만 하고, 고칠지는 사람이 정한다.
 - `docs/open-questions.md`의 항목 번호는 다시 매기지 않는다. 다른 문서가 번호로 항목을 가리킨다.
 - 인수 테스트는 HTTP 요청과 응답으로만 검증한다. 상태 코드, 응답 본문, 바뀐 상태(다음 요청으로 확인)까지 본다. 포인트만 예외로 DB에서 확인한다. 이유는 `docs/work/02-acceptance-test/test-strategy.md`에 있다.
