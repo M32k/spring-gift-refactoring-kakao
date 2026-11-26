@@ -42,6 +42,7 @@ IDE나 컴파일러가 "미사용"으로 보는 코드를 지우는 작업이다
 - 주석, TODO: 없음
 - 4단계와 충돌하는지: 상품 상세에 옵션을 함께 보여 주게 되면 다시 필요하다. 다시 만들기는 쉽다.
 - blame: `src/main/java/gift/product/Product.java:30-31,70-72`
+- blame 결과: 필드 `options`와 `getOptions()` 모두 `55ca9e4` 'feat: set up the project'에서 들어왔다. 넣은 이유는 커밋에 없다.
 - 바꾸는 파일: `src/main/java/gift/product/Product.java`
 - 확인 명령: 인수 테스트(7-1)
 - 커밋 메시지 예: `refactor: 쓰지 않는 Product.getOptions 제거`
