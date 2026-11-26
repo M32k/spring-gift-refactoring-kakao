@@ -81,8 +81,8 @@ public class OrderController {
         optionRepository.save(option);
 
         // deduct points
-        var price = option.getProduct().getPrice() * request.quantity();
-        member.deductPoint(price);
+        var totalPrice = option.getProduct().getPrice() * request.quantity();
+        member.deductPoint(totalPrice);
         memberRepository.save(member);
 
         // save order
