@@ -122,12 +122,15 @@
 
 ## 15. 회원은 자기 위시를 삭제한다 (왜: 확인 필요)
 - API: `DELETE /api/wishes/{id}`
-- 확인한 응답: 남의 위시면 403, 위시는 그대로
+- 확인한 응답:
+  - 남의 위시면 403, 위시는 그대로
+  - 자기 위시: 204, 목록에서 빠짐
+  - 없는 위시: 404(본문 없음)
 - 비고: 남의 위시는 삭제할 수 없다(open-questions 5번)
 
 ### 인수 조건
 
-인수 조건: `src/test/resources/features/wish.feature` (15-1)
+인수 조건: `src/test/resources/features/wish.feature` (15-1~15-3)
 
 ## 16. 회원은 포인트로 상품 옵션을 주문한다 (왜: 확인 필요)
 - API: `POST /api/orders`
