@@ -31,7 +31,7 @@ public class KakaoMessageClient {
 
     private String buildTemplate(Order order, Product product) {
         var totalPrice = String.format("%,d", product.getPrice() * order.getQuantity());
-        var message =
+        var orderMessageLine =
                 order.getMessage() != null && !order.getMessage().isBlank() ? "\\n\\n💌 " + order.getMessage() : "";
         return """
             {
@@ -40,6 +40,7 @@ public class KakaoMessageClient {
                 "link": {},
                 "button_title": "선물 확인하기"
             }
-            """.formatted(product.getName(), order.getOption().getName(), order.getQuantity(), totalPrice, message);
+            """.formatted(
+                product.getName(), order.getOption().getName(), order.getQuantity(), totalPrice, orderMessageLine);
     }
 }
