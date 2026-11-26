@@ -40,8 +40,8 @@
 - **확인한 방법**: curl로 같은 주문을 두 번째로 보낸 뒤 재고를 확인함.
   - 초기 데이터의 user2(포인트 3,000,000)로 한 번에 주문해도 같은 작동
 - **이유가 코드에 있는지**: 없음. 작동을 만드는 코드는 다음과 같다.
-  - 재고를 줄이고 바로 저장한다: `option.subtractQuantity(...)` 다음에 `optionRepository.save(option)`(`OrderController.java:87-88`).
-  - 그다음 포인트를 줄일 때 예외가 난다: `member.deductPoint(price)`(`OrderController.java:92`)에서 `throw new IllegalArgumentException("포인트가 부족합니다.")`(`src/main/java/gift/member/Member.java:61-63`).
+  - 재고를 줄이고 바로 저장한다: `option.subtractStock(...)` 다음에 `optionRepository.save(option)`(`OrderController.java:87-88`).
+  - 그다음 포인트를 줄일 때 예외가 난다: `member.deductPoint(totalPrice)`(`OrderController.java:92`)에서 `throw new IllegalArgumentException("포인트가 부족합니다.")`(`src/main/java/gift/member/Member.java:61-63`).
   - `createOrder`와 `OrderController`에 `@Transactional`이 없다. 프로젝트 전체에도 `@Transactional`이 없어서, 앞에서 저장한 재고 변경이 되돌려지지 않는다.
   - 500인 이유: `OrderController`에는 `@ExceptionHandler`가 없고, 프로젝트에 `@ControllerAdvice`도 없다. 그래서 `IllegalArgumentException`이 400으로 바뀌지 않는다. `ProductController`와 `MemberController`에는 컨트롤러별 400 처리기가 있다.
 - **인수 테스트**: `src/test/resources/features/order.feature` 16-2 (500, 재고는 줄어든 채 남음)
@@ -73,7 +73,7 @@
 - **작동**: 상품명 검증 오류 메시지는 한국어인데, 다른 곳에는 영어 메시지가 있다.
 - **확인한 방법**: 한국어 메시지는 요청으로, 영어 메시지는 코드로 확인함.
 - **이유가 코드에 있는지**: 없음. 메시지 언어에 대한 규칙이나 주석이 없다.
-  - 한국어: `ProductNameValidator`(`src/main/java/gift/product/ProductNameValidator.java:23,28,32,36`), `Option.subtractQuantity`(`src/main/java/gift/option/Option.java:41`), `Member.deductPoint`(`Member.java:59,62`)
+  - 한국어: `ProductNameValidator`(`src/main/java/gift/product/ProductNameValidator.java:23,28,32,36`), `Option.subtractStock`(`src/main/java/gift/option/Option.java:41`), `Member.deductPoint`(`Member.java:59,62`)
   - 영어: `Member.chargePoint`의 `"Amount must be greater than zero."`(`Member.java:51`), `MemberController`의 `"Email is already registered."`, `"Invalid email or password."`(`MemberController.java:36,47,50`), `AdminMemberController`의 `"Member not found. id=..."`(`AdminMemberController.java:46,57,69,81`)
   - 같은 `Member` 클래스 안에서도 충전 메시지는 영어, 차감 메시지는 한국어다(`Member.java:51` vs `:59`).
 - **상태**: 미결정
@@ -119,8 +119,8 @@
   - **3번과의 차이**: 3번(포인트 부족)은 500이 와도 재고가 줄어든 채로 남는다. 이 경우(재고 부족)는 아무 상태도 바뀌지 않는다. 같은 500이어도 실패한 단계에 따라 데이터가 남기도 하고 남지 않기도 한다.
 - **확인한 방법**: user2의 로그인 토큰으로 일반 감귤 옵션(재고 50)을 51개 주문하자 500이 왔다. 그 뒤 재고는 50, user2 포인트는 3,000,000 그대로였다. 이때 주문 금액은 25,000 × 51 = 1,275,000원이라 포인트는 충분했다. 따라서 실패 원인은 재고 부족이다(`V2__Insert_default_data.sql:17,26,49-50`).
 - **이유가 코드에 있는지**: 없음. 작동을 만드는 코드는 다음과 같다.
-  - 500인 이유: `Option.subtractQuantity`가 `IllegalArgumentException("차감할 수량이 현재 재고보다 많습니다.")`를 던진다(`src/main/java/gift/option/Option.java:40-42`). 3번과 마찬가지로 `OrderController`에는 이 예외를 400으로 바꾸는 처리기가 없다.
-  - 상태가 남지 않는 이유: `subtractQuantity`는 재고를 줄이기 전에 수량을 확인하고 예외를 던진다(`Option.java:40-43`). 그래서 그 뒤의 `optionRepository.save(option)`(`OrderController.java:88`)와 포인트 차감(`:92`)까지 가지 않는다. 3번은 재고를 저장한 뒤에 실패하고, 이 경우는 저장하기 전에 실패한다.
+  - 500인 이유: `Option.subtractStock`이 `IllegalArgumentException("차감할 수량이 현재 재고보다 많습니다.")`를 던진다(`src/main/java/gift/option/Option.java:40-42`). 3번과 마찬가지로 `OrderController`에는 이 예외를 400으로 바꾸는 처리기가 없다.
+  - 상태가 남지 않는 이유: `subtractStock`은 재고를 줄이기 전에 수량을 확인하고 예외를 던진다(`Option.java:40-43`). 그래서 그 뒤의 `optionRepository.save(option)`(`OrderController.java:88`)와 포인트 차감(`:92`)까지 가지 않는다. 3번은 재고를 저장한 뒤에 실패하고, 이 경우는 저장하기 전에 실패한다.
 - **인수 테스트**: `src/test/resources/features/order.feature` 16-3 (500, 재고와 포인트 그대로)
 - **상태**: 미결정
 
@@ -257,7 +257,7 @@
 - **작동**: 주문 알림 발송에서 나는 모든 예외를 잡고 무시한다. 로그도 남기지 않는다. 주문은 201로 성공한다. 회원에게 카카오 액세스 토큰이 없으면 발송을 시도하지 않는다.
 - **확인한 방법**: 코드 읽기 (`OrderController.java:98-113`)
 - **이유가 코드에 있는지**: 부분적으로 있다.
-  - 주석 `// best-effort kakao notification`(`OrderController.java:98`)과 메서드 이름 `sendKakaoMessageIfPossible`(`:104`)에서 실패해도 괜찮다는 의도가 보인다.
+  - 주석 `// best-effort kakao notification`(`OrderController.java:98`)과 메서드 이름 `sendOrderNotificationIfPossible`(`:104`)에서 실패해도 괜찮다는 의도가 보인다.
   - 하지만 `catch (Exception ignored) {}`(`:111-112`)는 로그도 남기지 않는다. 실패를 기록하지 않는 이유는 코드에 없다.
   - 발송은 `KakaoMessageClient.sendToMe`(`src/main/java/gift/order/KakaoMessageClient.java:16-29`)에서 하고, 재시도는 없다.
 - **상태**: 미결정 (실패 무시는 정책으로 보이지만, 로그를 남길지는 결정 필요)

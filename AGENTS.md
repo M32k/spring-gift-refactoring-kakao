@@ -15,10 +15,9 @@
 
 | 코드 | 실제 뜻 | 위치 |
 |---|---|---|
-| `quantity` | `Option.quantity`는 **재고**이고, `OrderRequest.quantity`와 `Order.quantity`는 **주문 수량**이다. `option.subtractQuantity(request.quantity())`는 재고에서 주문 수량을 빼는 코드다. | `order/OrderController.java:87` |
-| `price` | `Product.price`는 상품 1개의 **가격**이다. 주문 처리 안의 지역 변수 `price`와 알림의 `totalPrice`는 **주문 금액**(가격 × 주문 수량)이다. | `order/OrderController.java:91`, `order/KakaoMessageClient.java:32` |
-| `token`, `accessToken` | `TokenResponse.token`과 `JwtProvider`는 **로그인 토큰**이다. 주석에는 "JWT access token"이라고 적혀 있다. `Member.kakaoAccessToken`과 `KakaoLoginClient`의 `accessToken`은 **카카오 액세스 토큰**이다. 둘 다 `Authorization: Bearer`로 보낸다. | `auth/TokenResponse.java`, `member/Member.java:24` |
-| `message` | `Order.message`와 `OrderRequest.message`는 **주문 메시지**다. `KakaoMessageClient`와 `sendKakaoMessageIfPossible`은 **주문 알림**을 보낸다. `e.getMessage()`는 오류 메시지다. | `order/` |
+| `quantity` | `Option.quantity`는 **재고**이고, `OrderRequest.quantity`와 `Order.quantity`는 **주문 수량**이다. `subtractStock`은 재고에서 주문 수량을 뺀다. | `option/Option.java:28`, `order/OrderRequest.java:6`, `order/Order.java:25`, `order/OrderController.java:80` |
+| `token`, `accessToken` | `TokenResponse.token`은 **로그인 토큰**이다(응답 JSON 키). `KakaoLoginClient.KakaoTokenResponse.accessToken`은 **카카오 액세스 토큰**이다(카카오 응답). | `auth/TokenResponse.java:9`, `auth/KakaoLoginClient.java:47` |
+| `message` | `Order.message`와 `OrderRequest.message`는 **주문 메시지**다. `KakaoMessageClient`(클래스 이름)는 **주문 알림**을 보낸다. `e.getMessage()`는 오류 메시지다. | `order/Order.java:26`, `order/OrderRequest.java:6`, `order/KakaoMessageClient.java:9` |
 | `admin`, `Admin*Controller` | 이름만 관리자용이다. `/admin/**`에는 권한 확인이 없다. 초기 데이터의 `admin@example.com`도 일반 회원이다. | `member/AdminMemberController.java`, `product/AdminProductController.java` |
 | 회원 id와 `user` 번호 | 초기 데이터의 `user1@example.com`은 회원 id 2이고, `user2@example.com`은 회원 id 3이다. id 1은 admin이다. | `db/migration/V2__Insert_default_data.sql` |
 

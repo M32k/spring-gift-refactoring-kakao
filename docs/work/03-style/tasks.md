@@ -112,6 +112,7 @@ Java 포매터를 적용하고, 코드 이름을 용어 사전에 맞추는 작�
 ### N8. 문서 반영
 
 - `AGENTS.md` "코드가 오해를 부르는 곳" 표의 이름과 `파일:줄`, `docs/open-questions.md` 10번의 `sendKakaoMessageIfPossible`을 새 이름으로 고친다.
+- open-questions 10번 말고도 3, 6, 12번 항목의 옛 이름(`subtractQuantity`, `deductPoint(price)`)을 바꿨다.
 - open-questions의 다른 줄 번호는 `05-service-layer`의 마지막 항목(D1)에서 한 번에 고친다.
 - 바꾸는 파일: `AGENTS.md`, `docs/open-questions.md`
 - 확인 명령: 문서의 `파일:줄`을 코드와 대조
