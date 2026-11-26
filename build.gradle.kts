@@ -70,7 +70,6 @@ spotless {
         palantirJavaFormat("2.96.0")
         removeUnusedImports()
     }
-    isEnforceCheck = false
 }
 
 tasks.withType<Test> {
