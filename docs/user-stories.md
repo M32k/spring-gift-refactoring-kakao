@@ -110,8 +110,12 @@
 
 ## 11. 관리자는 상품에 옵션을 등록한다 (왜: 확인 필요)
 - API: `POST /api/products/{productId}/options`
-- 확인한 응답: 201 (로그인 토큰 없이도 성공)
+- 확인한 응답: 201 + Location (로그인 토큰 없이도 성공) / 같은 상품 안 중복 옵션명: 400 / 허용 안 되는 문자: 400 / 없는 상품: 404 / 없는 상품 + 틀린 옵션명: 400
 - 비고: 실제로는 로그인 토큰 없이 누구나 할 수 있다(open-questions 16번). 같은 상품 안에서 옵션명 중복은 막는다
+
+### 인수 조건
+
+인수 조건: `src/test/resources/features/option-create.feature` (11-1~11-6)
 
 ## 12. 관리자는 상품의 옵션을 삭제한다 (왜: 확인 필요)
 - API: `DELETE /api/products/{productId}/options/{optionId}`

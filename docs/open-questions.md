@@ -170,6 +170,7 @@
 - **이유가 코드에 있는지**: 없음.
   - `OptionController.createOption`(`src/main/java/gift/option/OptionController.java:47-67`)은 `Authorization` 헤더를 받지 않고 인증도 확인하지 않는다.
   - 1번과 원인이 같다. 인증을 일부러 뺐다는 주석은 없다. 클래스 주석(`OptionController.java:20-23`)에는 옵션 규칙만 있다.
+- **인수 테스트**: `src/test/resources/features/option-create.feature` 11-1 (로그인 토큰 없이 등록되는 지금 작동)
 - **상태**: 미결정
 
 ### 17. 옵션 삭제가 로그인 토큰 없이 성공한다
