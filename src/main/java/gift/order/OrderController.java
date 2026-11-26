@@ -89,12 +89,12 @@ public class OrderController {
         var saved = orderRepository.save(new Order(option, member.getId(), request.quantity(), request.message()));
 
         // best-effort kakao notification
-        sendKakaoMessageIfPossible(member, saved, option);
+        sendOrderNotificationIfPossible(member, saved, option);
         return ResponseEntity.created(URI.create("/api/orders/" + saved.getId()))
                 .body(OrderResponse.from(saved));
     }
 
-    private void sendKakaoMessageIfPossible(Member member, Order order, Option option) {
+    private void sendOrderNotificationIfPossible(Member member, Order order, Option option) {
         if (member.getKakaoAccessToken() == null) {
             return;
         }
