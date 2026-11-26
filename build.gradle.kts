@@ -6,6 +6,7 @@ plugins {
     id("io.spring.dependency-management") version "1.1.7"
     id("org.jlleitschuh.gradle.ktlint") version "14.0.1"
     id("org.flywaydb.flyway") version "12.0.1"
+    id("com.diffplug.spotless") version "8.11.0"
 }
 
 group = "camp.nextstep.edu"
@@ -61,6 +62,15 @@ allOpen {
 
 ktlint {
     verbose.set(true)
+}
+
+spotless {
+    java {
+        target("src/main/java/**/*.java", "src/test/java/**/*.java")
+        palantirJavaFormat("2.96.0")
+        removeUnusedImports()
+    }
+    isEnforceCheck = false
 }
 
 tasks.withType<Test> {

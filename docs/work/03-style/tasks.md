@@ -23,11 +23,11 @@ Java 포매터를 적용하고, 코드 이름을 용어 사전에 맞추는 작�
 
 ### S1. 포매터 설정 추가 (검사는 끈 채로)
 
-- `build.gradle.kts`에 `com.diffplug.spotless` 플러그인을 더한다.
-  - `java { target("src/main/java/**/*.java", "src/test/java/**/*.java"); palantirJavaFormat("<버전>"); removeUnusedImports() }`
+- `build.gradle.kts`에 `id("com.diffplug.spotless") version "8.11.0"` 플러그인을 더한다.
+  - `java { target("src/main/java/**/*.java", "src/test/java/**/*.java"); palantirJavaFormat("2.96.0"); removeUnusedImports() }`
   - `isEnforceCheck = false`
-- 플러그인과 Palantir 버전은 넣을 때 확인한다(Java 21에서 도는 버전).
-- 바꾸는 파일: `build.gradle.kts`
+- 버전: Spotless 플러그인 8.11.0, Palantir Java Format 2.96.0
+- 바꾸는 파일: `build.gradle.kts`, `docs/work/03-style/tasks.md`(버전 기록)
 - 확인 명령: `./gradlew build` 통과. `./gradlew spotlessCheck`는 아직 실패하는 게 맞다(고칠 파일 목록이 나온다).
 - 커밋 메시지 예: `style: Spotless와 Palantir Java Format 설정 추가`
 
