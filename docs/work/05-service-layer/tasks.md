@@ -119,7 +119,7 @@
 - 커밋 메시지 예: `refactor: 주문하기 로직을 OrderService로 옮김`
 
 ### O3. 주문 알림 발송을 OrderService로
-끝: ed27c9e refactor: 주문 알림 발송을 OrderService로 옮김
+끝: ed27c9e refactor: 주문 알림 발송을 OrderService로 옮김 (K1 확인 때 카카오톡 주문 알림 도착 확인)
 
 - 주문 알림 메서드(03-style N5에서 이름을 바꿈)를 `OrderService`로 옮긴다. 주문 저장 바로 뒤에 부른다.
 - 카카오 액세스 토큰이 없으면 보내지 않는다. 모든 예외를 잡고 무시하며, 로그도 지금처럼 남기지 않는다(open-questions 10번).
@@ -180,7 +180,7 @@
 - 커밋 메시지 예: `refactor: 카테고리 로직을 CategoryService로 옮김`
 
 ### K1. 카카오 로그인 콜백의 회원 처리를 MemberService로
-끝: c4790fb refactor: 카카오 로그인 회원 처리를 MemberService로 옮김 (직접 카카오 로그인 후 주문 201 확인)
+끝: c4790fb refactor: 카카오 로그인 회원 처리를 MemberService로 옮김 (직접 카카오 로그인 후 주문 201, 카카오톡 주문 알림 도착 확인)
 
 - 회원 찾기·만들기와 카카오 액세스 토큰 저장, 로그인 토큰 발급을 옮긴다.
 - 카카오 로그인 주소 만들기(`/login`)는 컨트롤러에 남긴다.
@@ -193,6 +193,7 @@
 끝: 0ab9356 test: 컨트롤러와 서비스 계층 규칙 추가 (Admin 제외 줄을 빼면 AdminProductController 위반 16건으로 실패하는 것 확인)
 
 - 규칙 A: A2와 같다. `AdminProductController`, `AdminMemberController`는 이름으로 빼고, 테스트 코드의 그 자리에 아래 "옮기지 않은 것" 표를 가리키는 주석을 단다.
+  - 실제 코드는 A2의 타입(`org.springframework.data.repository.Repository`) 대신 이름이 `Repository`로 끝나는 클래스로 검사한다. 지금 저장소의 저장소 인터페이스는 모두 이름이 `…Repository`라서 잡는 범위는 같다.
 - 규칙 B: 이름이 `Service`로 끝나는 클래스는 `org.springframework.http..`, `org.springframework.web..`, `org.springframework.ui..`에 의존하지 않는다. 404와 `Model`은 컨트롤러가 맡는다.
 - 바꾸는 파일: `src/test/java/gift/architecture/LayerArchitectureTest.java`
 - 확인 명령: ArchUnit 통과, 전체 테스트 `./gradlew test`
