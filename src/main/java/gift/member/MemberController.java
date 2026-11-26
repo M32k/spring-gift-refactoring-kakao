@@ -37,8 +37,8 @@ public class MemberController {
         }
 
         final Member member = memberRepository.save(new Member(request.email(), request.password()));
-        final String token = jwtProvider.createToken(member.getEmail());
-        return ResponseEntity.status(HttpStatus.CREATED).body(new TokenResponse(token));
+        final String loginToken = jwtProvider.createToken(member.getEmail());
+        return ResponseEntity.status(HttpStatus.CREATED).body(new TokenResponse(loginToken));
     }
 
     @PostMapping("/login")
@@ -51,8 +51,8 @@ public class MemberController {
             throw new IllegalArgumentException("Invalid email or password.");
         }
 
-        final String token = jwtProvider.createToken(member.getEmail());
-        return ResponseEntity.ok(new TokenResponse(token));
+        final String loginToken = jwtProvider.createToken(member.getEmail());
+        return ResponseEntity.ok(new TokenResponse(loginToken));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
