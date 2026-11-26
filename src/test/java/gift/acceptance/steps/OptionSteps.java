@@ -50,6 +50,12 @@ public class OptionSteps {
                 .post("/api/products/{productId}/options", productId));
     }
 
+    @When("^로그인 토큰 없이 상품 (\\d+)의 옵션 (\\d+)(?:을|를) 삭제한다$")
+    public void deleteOptionWithoutLoginToken(long productId, long optionId) {
+        context.setLastResponse(
+                given().when().delete("/api/products/{productId}/options/{optionId}", productId, optionId));
+    }
+
     @Then("^응답의 옵션은 옵션명 \"([^\"]*)\", 재고 (\\d+)(?:이다|다)$")
     public void responseOptionIs(String name, int stock) {
         JsonPath body = context.lastResponse().jsonPath();

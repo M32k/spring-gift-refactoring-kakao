@@ -119,8 +119,12 @@
 
 ## 12. 관리자는 상품의 옵션을 삭제한다 (왜: 확인 필요)
 - API: `DELETE /api/products/{productId}/options/{optionId}`
-- 확인한 응답: 204
+- 확인한 응답: 204 / 옵션이 1개뿐인 상품: 400 / 다른 상품의 옵션·없는 옵션·없는 상품: 404 / 옵션 1개 상품 + 없는 옵션: 400 / 주문이 있는 옵션: 500
 - 비고: 실제로는 로그인 토큰 없이 누구나 할 수 있다(open-questions 17번). 옵션이 1개뿐이면 삭제할 수 없다(`OptionController.java:21` 주석은 규칙만 적고 이유는 없다)
+
+### 인수 조건
+
+인수 조건: `src/test/resources/features/option-delete.feature` (12-1~12-7)
 
 ## 13. 회원은 자기 위시 목록을 본다 (왜: 확인 필요)
 - API: `GET /api/wishes`

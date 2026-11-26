@@ -181,6 +181,7 @@
 - **이유가 코드에 있는지**: 없음.
   - `OptionController.deleteOption`(`OptionController.java:69-91`)은 `Authorization` 헤더를 받지 않고 인증도 확인하지 않는다.
   - 1번과 원인이 같다. 인증을 일부러 뺐다는 주석은 없다.
+- **인수 테스트**: `src/test/resources/features/option-delete.feature` 12-1 (로그인 토큰 없이 삭제되는 지금 작동)
 - **상태**: 미결정
 
 ### 18. 상품 수정이 로그인 토큰 없이 성공한다
@@ -256,6 +257,18 @@
   - 이 예외를 처리하는 곳이 없어서 500이 된다. `ProductController`의 `@ExceptionHandler`는 `IllegalArgumentException`만 처리하고, 프로젝트에 `@ControllerAdvice`도 없다.
   - 옵션은 `Product.options`의 `cascade`로 함께 지워지려 하지만(`src/main/java/gift/product/Product.java:30`), 삭제가 실패하면서 함께 되돌려진다.
 - **인수 테스트**: `src/test/resources/features/product-delete.feature` 9-3 (500, 상품·옵션·위시 그대로)
+- **상태**: 미결정
+
+### 25. 주문이 있는 옵션을 삭제하면 500이 온다
+
+- **작동**: 주문에 쓰인 옵션을 삭제하면 500이 온다. 옵션은 그대로다.
+- **확인한 방법**: 직접 curl로 확인함. 앱을 새로 켜서 초기 데이터로 되돌린 뒤 상품 2의 옵션 3(user1의 주문 1에 쓰임)을 삭제하자 500이 왔다. 그 뒤 상품 2의 옵션 목록에 옵션 3, 4가 그대로 있었다.
+- **이유가 코드에 있는지**: 없음. 작동을 만드는 코드는 다음과 같다.
+  - `orders.option_id` 외래 키에 `ON DELETE`가 없다(`src/main/resources/db/migration/V1__Initialize_project_tables.sql:55`).
+  - `OptionController.deleteOption`은 주문이 있는지 확인하지 않고 바로 `optionRepository.delete(option)`를 부른다(`src/main/java/gift/option/OptionController.java:82`).
+  - 이 예외를 처리하는 곳이 없어서 500이 된다. `OptionController`의 `@ExceptionHandler`는 `IllegalArgumentException`만 처리하고(`OptionController.java:93`), 프로젝트에 `@ControllerAdvice`도 없다.
+  - 24번(상품 삭제)과 원인이 같다.
+- **인수 테스트**: `src/test/resources/features/option-delete.feature` 12-7 (500, 옵션 그대로)
 - **상태**: 미결정
 
 ---
