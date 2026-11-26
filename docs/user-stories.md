@@ -208,12 +208,12 @@
 - 확인한 응답:
   - 관리자 화면: "카카오" 상품명으로 등록 성공
   - 비교: 같은 상품명을 `POST /api/products`로 보내면 400("담당 MD와 협의한 경우에만" 메시지)
-- 비고: 근거는 `ProductNameValidator.java:36` 메시지와 `AdminProductController.java:47`의 `allowKakao = true`. API는 막고 관리자 화면은 허용한다(open-questions 20번)
+- 비고: 근거는 `ProductNameValidator.java:34` 메시지와 `AdminProductController.java:45`의 `allowKakao = true`. API는 막고 관리자 화면은 허용한다(open-questions 20번)
 
 ## 20. 관리자는 담당 MD와 협의한 "카카오" 상품명을 쓰려고, 상품을 수정할 때도 "카카오"가 들어간 상품명을 쓴다
 - API: `GET /admin/products/{id}/edit`, `POST /admin/products/{id}/edit`
 - 확인한 응답: "카카오" 상품명을 유지한 채 302, 다시 조회하면 바뀐 값
-- 비고: 근거는 `AdminProductController.java:80`
+- 비고: 근거는 `AdminProductController.java:78`
 
 ## 21. 관리자는 상품을 삭제한다 (왜: 확인 필요)
 - API: `POST /admin/products/{id}/delete`
@@ -240,7 +240,7 @@
 - 확인한 응답:
   - 10000: 302, 충전 성공
   - 0, -100: 500, 실패 뒤 포인트는 그대로
-- 비고: 실제로는 로그인 없이 누구나 할 수 있다(open-questions 22번). 단서: `Member.java:56` 주석 "point deduction for order payment"에서 포인트는 주문 결제에 쓰인다. 0이나 음수는 500이 온다(open-questions 19번)
+- 비고: 실제로는 로그인 없이 누구나 할 수 있다(open-questions 22번). 단서: `Member.java:55` 주석 "point deduction for order payment"에서 포인트는 주문 결제에 쓰인다. 0이나 음수는 500이 온다(open-questions 19번)
 
 ## 26. 관리자는 회원을 삭제한다 (왜: 확인 필요)
 - API: `POST /admin/members/{id}/delete`

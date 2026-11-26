@@ -29,7 +29,7 @@
 - **작동**: 주문 금액은 옵션과 관계없이 `상품 가격 × 주문 수량`으로 계산된다. 옵션에는 가격 필드가 없어서, 옵션이 달라도(예: 맥북 "스페이스 블랙 / M1 Pro"와 "실버 / M1 Max") 같은 금액이 차감된다.
 - **확인한 방법**: user1(포인트 5,000,000)이 맥북 옵션(재고 10)을 1개 주문하자 201이 오고, 재고는 9, 포인트는 1,640,000이 되었다(curl로 주문, 포인트는 `/admin/members`에서 확인). 줄어든 포인트 3,360,000원은 상품 가격과 같다. 옵션별 가격이 없다는 점은 코드로 확인했다.
 - **이유가 코드에 있는지**: 없음. 상품 가격으로 계산하는 이유를 설명하는 주석은 없다.
-  - 금액 계산: `option.getProduct().getPrice() * request.quantity()`(`src/main/java/gift/order/OrderService.java:54`). 주문 알림에 적히는 주문 금액도 같은 방식으로 계산한다(`src/main/java/gift/order/KakaoMessageClient.java:32`).
+  - 금액 계산: `option.getProduct().getPrice() * request.quantity()`(`src/main/java/gift/order/OrderService.java:54`). 주문 알림에 적히는 주문 금액도 같은 방식으로 계산한다(`src/main/java/gift/order/KakaoMessageClient.java:33`).
   - `Option` 엔티티(`src/main/java/gift/option/Option.java:16-28`)에는 `id`, `product`, `name`, `quantity`만 있고 가격 필드가 없다.
   - 초기 데이터: 맥북 3,360,000원(`V2__Insert_default_data.sql:9`), 맥북 옵션 2개(`:38-40`), user1 포인트 5,000,000(`:24`).
 - **상태**: 미결정
@@ -41,7 +41,7 @@
   - 초기 데이터의 user2(포인트 3,000,000)로 한 번에 주문해도 같은 작동
 - **이유가 코드에 있는지**: 없음. 작동을 만드는 코드는 다음과 같다.
   - 재고를 줄이고 바로 저장한다: `option.subtractStock(...)` 다음에 `optionRepository.save(option)`(`OrderService.java:50-51`).
-  - 그다음 포인트를 줄일 때 예외가 난다: `member.deductPoint(totalPrice)`(`OrderService.java:55`)에서 `throw new IllegalArgumentException("포인트가 부족합니다.")`(`src/main/java/gift/member/Member.java:61-63`).
+  - 그다음 포인트를 줄일 때 예외가 난다: `member.deductPoint(totalPrice)`(`OrderService.java:55`)에서 `throw new IllegalArgumentException("포인트가 부족합니다.")`(`src/main/java/gift/member/Member.java:60-62`).
   - `createOrder`와 `OrderController`에 `@Transactional`이 없다. 프로젝트 전체에도 `@Transactional`이 없어서, 앞에서 저장한 재고 변경이 되돌려지지 않는다.
   - 500인 이유: `OrderController`에는 `@ExceptionHandler`가 없고, 프로젝트에 `@ControllerAdvice`도 없다. 그래서 `IllegalArgumentException`이 400으로 바뀌지 않는다. `ProductController`와 `MemberController`에는 컨트롤러별 400 처리기가 있다.
 - **인수 테스트**: `src/test/resources/features/order.feature` 16-2 (500, 재고는 줄어든 채 남음)
@@ -54,7 +54,7 @@
 - **이유가 코드에 있는지**: 없음.
   - `MemberController`(`src/main/java/gift/member/MemberController.java`)에는 `/register`, `/login`만 있다.
   - 포인트를 보여 주는 곳은 관리자 템플릿 `templates/member/list.html:27`, `templates/member/edit.html:15`뿐이다.
-  - 포인트 충전도 관리자 전용이다: `POST /admin/members/{id}/charge-point`(`src/main/java/gift/member/AdminMemberController.java:75-85`).
+  - 포인트 충전도 관리자 전용이다: `POST /admin/members/{id}/charge-point`(`src/main/java/gift/member/AdminMemberController.java:67-75`).
 - **상태**: 미결정
 
 ### 5. 다른 회원의 위시를 삭제하려고 하면 403이 온다
@@ -73,9 +73,9 @@
 - **작동**: 상품명 검증 오류 메시지는 한국어인데, 다른 곳에는 영어 메시지가 있다.
 - **확인한 방법**: 한국어 메시지는 요청으로, 영어 메시지는 코드로 확인함.
 - **이유가 코드에 있는지**: 없음. 메시지 언어에 대한 규칙이나 주석이 없다.
-  - 한국어: `ProductNameValidator`(`src/main/java/gift/product/ProductNameValidator.java:23,28,32,36`), `Option.subtractStock`(`src/main/java/gift/option/Option.java:41`), `Member.deductPoint`(`Member.java:59,62`)
-  - 영어: `Member.chargePoint`의 `"Amount must be greater than zero."`(`Member.java:51`), `MemberService`의 `"Email is already registered."`, `"Invalid email or password."`(`MemberService.java:18,28,31`), `AdminMemberController`의 `"Member not found. id=..."`(`AdminMemberController.java:46,57,69,81`)
-  - 같은 `Member` 클래스 안에서도 충전 메시지는 영어, 차감 메시지는 한국어다(`Member.java:51` vs `:59`).
+  - 한국어: `ProductNameValidator`(`src/main/java/gift/product/ProductNameValidator.java:21,26,30,34`), `Option.subtractStock`(`src/main/java/gift/option/Option.java:40`), `Member.deductPoint`(`Member.java:58,61`)
+  - 영어: `Member.chargePoint`의 `"Amount must be greater than zero."`(`Member.java:50`), `MemberService`의 `"Email is already registered."`, `"Invalid email or password."`(`MemberService.java:18,28,31`), `AdminMemberController`의 `"Member not found. id=..."`(`AdminMemberController.java:52,61,71`)
+  - 같은 `Member` 클래스 안에서도 충전 메시지는 영어, 차감 메시지는 한국어다(`Member.java:50` vs `:58`).
 - **상태**: 미결정
 
 ### 7. 초기 데이터의 비밀번호가 평문으로 저장돼 있다
@@ -84,7 +84,7 @@
 - **확인한 방법**: 초기 데이터 SQL 파일을 읽어 확인함.
 - **이유가 코드에 있는지**: 없음.
   - `V2__Insert_default_data.sql:21-26`: `'admin1234'`, `'password1'`, `'password2'`가 그대로 들어간다.
-  - 로그인도 평문을 그대로 비교한다: `member.getPassword().equals(password)`(`MemberService.java:30`). 회원 가입(`MemberService.java:21`)과 관리자 화면의 등록, 수정(`AdminMemberController.java:50,70`)도 받은 값을 그대로 저장한다.
+  - 로그인도 평문을 그대로 비교한다: `member.getPassword().equals(password)`(`MemberService.java:30`). 회원 가입(`MemberService.java:21`)과 관리자 화면의 등록, 수정(`AdminMemberController.java:44,62`)도 받은 값을 그대로 저장한다.
   - `PasswordEncoder`나 해시 처리는 프로젝트에 없다.
 - **상태**: 미결정
 
@@ -119,8 +119,8 @@
   - **3번과의 차이**: 3번(포인트 부족)은 500이 와도 재고가 줄어든 채로 남는다. 이 경우(재고 부족)는 아무 상태도 바뀌지 않는다. 같은 500이어도 실패한 단계에 따라 데이터가 남기도 하고 남지 않기도 한다.
 - **확인한 방법**: user2의 로그인 토큰으로 일반 감귤 옵션(재고 50)을 51개 주문하자 500이 왔다. 그 뒤 재고는 50, user2 포인트는 3,000,000 그대로였다. 이때 주문 금액은 25,000 × 51 = 1,275,000원이라 포인트는 충분했다. 따라서 실패 원인은 재고 부족이다(`V2__Insert_default_data.sql:17,26,49-50`).
 - **이유가 코드에 있는지**: 없음. 작동을 만드는 코드는 다음과 같다.
-  - 500인 이유: `Option.subtractStock`이 `IllegalArgumentException("차감할 수량이 현재 재고보다 많습니다.")`를 던진다(`src/main/java/gift/option/Option.java:40-42`). 3번과 마찬가지로 `OrderController`에는 이 예외를 400으로 바꾸는 처리기가 없다.
-  - 상태가 남지 않는 이유: `subtractStock`은 재고를 줄이기 전에 수량을 확인하고 예외를 던진다(`Option.java:40-43`). 그래서 그 뒤의 `optionRepository.save(option)`(`OrderService.java:51`)와 포인트 차감(`:55`)까지 가지 않는다. 3번은 재고를 저장한 뒤에 실패하고, 이 경우는 저장하기 전에 실패한다.
+  - 500인 이유: `Option.subtractStock`이 `IllegalArgumentException("차감할 수량이 현재 재고보다 많습니다.")`를 던진다(`src/main/java/gift/option/Option.java:39-41`). 3번과 마찬가지로 `OrderController`에는 이 예외를 400으로 바꾸는 처리기가 없다.
+  - 상태가 남지 않는 이유: `subtractStock`은 재고를 줄이기 전에 수량을 확인하고 예외를 던진다(`Option.java:39-42`). 그래서 그 뒤의 `optionRepository.save(option)`(`OrderService.java:51`)와 포인트 차감(`:55`)까지 가지 않는다. 3번은 재고를 저장한 뒤에 실패하고, 이 경우는 저장하기 전에 실패한다.
 - **인수 테스트**: `src/test/resources/features/order.feature` 16-3 (500, 재고와 포인트 그대로)
 - **상태**: 미결정
 
@@ -131,7 +131,7 @@
 - **작동**: 로그인하지 않고 로그인 토큰도 없이 `/admin/members`가 열린다. 4번에서 "관리자 화면에서만 볼 수 있다"고 한 회원 포인트도, 이 화면을 통해 누구나 볼 수 있다.
 - **확인한 방법**: 브라우저에서 로그인 토큰 없이 `/admin/members`에 접속하자 화면이 열렸다.
 - **이유가 코드에 있는지**: 없음.
-  - `AdminMemberController.list`(`src/main/java/gift/member/AdminMemberController.java:28-32`)는 인증이나 권한 확인 없이 `memberRepository.findAll()`을 화면에 넘긴다.
+  - `AdminMemberController.list`(`src/main/java/gift/member/AdminMemberController.java:26-30`)는 인증이나 권한 확인 없이 `memberRepository.findAll()`을 화면에 넘긴다.
   - 프로젝트에 공통 인증 장치(Spring Security, 필터, 인터셉터)가 없다. 관리자 화면을 일부러 열어 뒀다는 주석도 없다.
 - **상태**: 미결정
 
@@ -143,7 +143,7 @@
 - **확인한 방법**: 직접 확인함. 카카오 로그인으로 가입한 회원으로 주문했더니, 주문한 본인의 카카오톡에 "선물이 도착했어요" 메시지가 왔다.
 - **이유가 코드에 있는지**: 없음. 선물 문구를 본인에게 보내는 이유를 설명하는 주석은 없다.
   - 메시지 문구는 받는 사람 입장의 선물 알림이다. `"🎁 선물이 도착했어요!"`(`src/main/java/gift/order/KakaoMessageClient.java:39`), 버튼 `"선물 확인하기"`(`:41`).
-  - 보내는 곳은 "나에게 보내기" API다. 메서드 이름이 `sendToMe`(`KakaoMessageClient.java:16`)이고, 주소가 `/v2/api/talk/memo/default/send`(`:23`)이다. 주문한 회원의 카카오 액세스 토큰으로 보낸다(`OrderService.java:72`).
+  - 보내는 곳은 "나에게 보내기" API다. 메서드 이름이 `sendToMe`(`KakaoMessageClient.java:16`)이고, 주소가 `/v2/api/talk/memo/default/send`(`:24`)이다. 주문한 회원의 카카오 액세스 토큰으로 보낸다(`OrderService.java:72`).
   - 주문할 때 받는 사람 정보를 넘기지 않는다. `new Order(option, member.getId(), quantity, message)`(`OrderService.java:59`)
   - 참고로 초기 주문 데이터의 메시지는 받는 사람에게 쓰는 말이다. 예: `'생일 축하해! 🎉'`, `'엄마 감사합니다 ❤️'`(`V2__Insert_default_data.sql:55,59`)
 - **상태**: 미결정 (본인 알림이 의도인지, 받는 사람에게 보내는 기능이 빠진 것인지 결정 필요)
@@ -202,9 +202,9 @@
 - **작동**: 관리자 화면의 포인트 충전에 0이나 음수를 넣으면 500이 온다. 회원 포인트는 바뀌지 않는다. 양수(10000)는 정상적으로 충전되고 302로 목록에 돌아간다.
 - **확인한 방법**: 직접 curl로 확인함. 포인트 충전에 10000을 넣으면 302로 성공했다. 0과 -100을 넣으면 500이 왔고, 실패 뒤 포인트는 그대로였다.
 - **이유가 코드에 있는지**: 0 이하를 막는 규칙은 있지만, 500으로 응답하는 이유는 없다.
-  - 규칙: `Member.chargePoint`가 0 이하이면 `IllegalArgumentException("Amount must be greater than zero.")`를 던진다(`src/main/java/gift/member/Member.java:49-52`). 왜 0 이하를 막는지 설명하는 주석은 없다.
-  - 500인 이유: `AdminMemberController.chargePoint`(`src/main/java/gift/member/AdminMemberController.java:75-85`)에는 이 예외를 처리하는 코드가 없다. 컨트롤러에 `@ExceptionHandler`가 없고, 프로젝트에 `@ControllerAdvice`도 없다. 그래서 오류 메시지를 화면에 보여 주지 못하고 500이 된다. 같은 컨트롤러의 회원 등록은 오류를 화면에 보여 준다(`AdminMemberController.java:45-48`).
-  - 포인트가 그대로인 이유: 포인트를 더하기 전에 예외가 나서(`Member.java:50-53`), 그 뒤의 `memberRepository.save(member)`(`AdminMemberController.java:83`)까지 가지 않는다.
+  - 규칙: `Member.chargePoint`가 0 이하이면 `IllegalArgumentException("Amount must be greater than zero.")`를 던진다(`src/main/java/gift/member/Member.java:48-51`). 왜 0 이하를 막는지 설명하는 주석은 없다.
+  - 500인 이유: `AdminMemberController.chargePoint`(`src/main/java/gift/member/AdminMemberController.java:67-75`)에는 이 예외를 처리하는 코드가 없다. 컨트롤러에 `@ExceptionHandler`가 없고, 프로젝트에 `@ControllerAdvice`도 없다. 그래서 오류 메시지를 화면에 보여 주지 못하고 500이 된다. 같은 컨트롤러의 회원 등록은 오류를 화면에 보여 준다(`AdminMemberController.java:39-42`).
+  - 포인트가 그대로인 이유: 포인트를 더하기 전에 예외가 나서(`Member.java:49-52`), 그 뒤의 `memberRepository.save(member)`(`AdminMemberController.java:73`)까지 가지 않는다.
 - **상태**: 미결정
 
 ### 20. 같은 "카카오" 상품명을 API는 막고 관리자 화면은 허용한다
@@ -214,8 +214,8 @@
   - API(curl): 400과 함께 "담당 MD와 협의한 경우에만" 메시지가 왔다.
   - 관리자 화면(브라우저): 같은 상품명으로 등록에 성공했다. "카카오" 상품명을 유지한 채 수정해도 302가 왔고, 다시 조회하자 바뀐 값이 나왔다.
 - **이유가 코드에 있는지**: 부분적으로 있다.
-  - 막는 이유는 메시지에 있다: `"\"카카오\"가 포함된 상품명은 담당 MD와 협의한 경우에만 사용할 수 있습니다."`(`src/main/java/gift/product/ProductNameValidator.java:35-37`)
-  - 다르게 처리하는 코드: API는 `validate(name)`(`src/main/java/gift/product/ProductService.java:64`)를 호출하고, 이 메서드는 `allowKakao = false`로 검사한다(`ProductNameValidator.java:15-17`). 관리자 화면은 `validate(name, true)`로 허용한다(`src/main/java/gift/product/AdminProductController.java:47,80`).
+  - 막는 이유는 메시지에 있다: `"\"카카오\"가 포함된 상품명은 담당 MD와 협의한 경우에만 사용할 수 있습니다."`(`src/main/java/gift/product/ProductNameValidator.java:33-35`)
+  - 다르게 처리하는 코드: API는 `validate(name)`(`src/main/java/gift/product/ProductService.java:64`)를 호출하고, 이 메서드는 `allowKakao = false`로 검사한다(`ProductNameValidator.java:13-15`). 관리자 화면은 `validate(name, true)`로 허용한다(`src/main/java/gift/product/AdminProductController.java:45,78`).
   - 관리자 화면이 "MD와 협의한 경우"에 해당한다는 설명은 코드에 없다. 관리자 화면에서 등록하면 협의를 거친 것으로 보는지는 확인이 필요하다.
   - 참고: API의 상품 등록과 수정은 로그인 토큰 없이 된다(1번, 18번). `AdminProductController`에도 인증 확인 코드가 없다. 그래서 "카카오" 상품명 말고는 API와 관리자 화면 사이에 권한 차이가 없을 것으로 보인다. 관리자 상품 화면이 로그인 없이 열리는지는 요청으로 확인하지 않았다.
 - **인수 테스트**: `src/test/resources/features/product-update.feature` 8-3 (API로 수정할 때 "카카오" 상품명을 막는 지금 작동)
@@ -226,9 +226,9 @@
 - **작동**: 관리자 화면에서 이미 삭제한 회원 id로 수정 요청을 보내면 404가 아니라 500이 온다.
 - **확인한 방법**: 직접 curl로 확인함. 회원을 삭제한 뒤, 그 회원 id로 관리자 화면의 수정 요청을 보내자 500이 왔다.
 - **이유가 코드에 있는지**: 없음. 작동을 만드는 코드는 다음과 같다.
-  - `AdminMemberController.update`가 회원을 찾지 못하면 `IllegalArgumentException("Member not found. id=...")`를 던진다(`src/main/java/gift/member/AdminMemberController.java:68-69`).
+  - `AdminMemberController.update`가 회원을 찾지 못하면 `IllegalArgumentException("Member not found. id=...")`를 던진다(`src/main/java/gift/member/AdminMemberController.java:59-61`).
   - 이 컨트롤러에는 `@ExceptionHandler`가 없고, 프로젝트에 `@ControllerAdvice`도 없다. 그래서 404로 바뀌지 않고 500이 된다.
-  - 수정 화면 열기(`AdminMemberController.java:56-57`)와 포인트 충전(`:80-81`)도 같은 방식으로 회원을 찾는다. 그래서 없는 회원 id로 요청하면 똑같이 500이 될 것으로 보이지만, 요청으로는 확인하지 않았다.
+  - 수정 화면 열기(`AdminMemberController.java:50-52`)와 포인트 충전(`:69-71`)도 같은 방식으로 회원을 찾는다. 그래서 없는 회원 id로 요청하면 똑같이 500이 될 것으로 보이지만, 요청으로는 확인하지 않았다.
 - **상태**: 미결정
 
 ### 22. 관리자 화면의 회원 수정, 포인트 충전, 회원 삭제가 로그인 없이 성공한다
@@ -241,7 +241,7 @@
   - 포인트 충전: 10000을 넣자 302가 오고 충전되었다.
   - 회원 삭제: 302가 왔다. 그 뒤 목록에서 사라졌다.
 - **이유가 코드에 있는지**: 없음.
-  - `AdminMemberController`의 수정(`src/main/java/gift/member/AdminMemberController.java:62-73`), 충전(`:75-85`), 삭제(`:87-91`)에는 인증이나 권한 확인이 없다.
+  - `AdminMemberController`의 수정(`src/main/java/gift/member/AdminMemberController.java:57-65`), 충전(`:67-75`), 삭제(`:77-81`)에는 인증이나 권한 확인이 없다.
   - 13번과 원인이 같다. 공통 인증 장치가 없고, 관리자 기능을 일부러 열어 뒀다는 주석도 없다.
   - 참고: 누구나 회원의 이메일과 비밀번호를 바꾸고, 포인트를 충전하고, 회원을 삭제할 수 있다.
 - **상태**: 미결정
@@ -325,7 +325,7 @@
 - **이유가 코드에 있는지**: 부분적으로 있다.
   - 주석 `// best-effort kakao notification`(`OrderService.java:61`)과 메서드 이름 `sendOrderNotificationIfPossible`(`:66`)에서 실패해도 괜찮다는 의도가 보인다.
   - 하지만 `catch (Exception ignored) {}`(`:73-74`)는 로그도 남기지 않는다. 실패를 기록하지 않는 이유는 코드에 없다.
-  - 발송은 `KakaoMessageClient.sendToMe`(`src/main/java/gift/order/KakaoMessageClient.java:16-29`)에서 하고, 재시도는 없다.
+  - 발송은 `KakaoMessageClient.sendToMe`(`src/main/java/gift/order/KakaoMessageClient.java:16-30`)에서 하고, 재시도는 없다.
 - **상태**: 미결정 (실패 무시는 정책으로 보이지만, 로그를 남길지는 결정 필요)
 
 ### 23. JWT_SECRET 환경 변수가 없으면 저장소에 있는 예시 비밀 키로 로그인 토큰을 만든다
@@ -333,7 +333,7 @@
 - **작동**: `JWT_SECRET` 환경 변수를 넣지 않고 실행하면, `application.properties`에 적힌 예시 기본값이 로그인 토큰의 서명 키가 된다. 로그인 토큰을 만들 때와 확인할 때 모두 이 키를 쓴다.
 - **확인한 방법**: 코드를 읽어 확인함
   - `jwt.secret=${JWT_SECRET:...}`(`src/main/resources/application.properties:2`)
-  - `JwtProvider` 생성자가 `jwt.secret`으로 서명 키를 만든다(`src/main/java/gift/auth/JwtProvider.java:25-28`).
+  - `JwtProvider` 생성자가 `jwt.secret`으로 서명 키를 만든다(`src/main/java/gift/auth/JwtProvider.java:21-24`).
 - **이유가 코드에 있는지**: 없음. 예시 값을 기본값으로 둔 이유를 설명하는 주석이 없다. `KAKAO_CLIENT_ID`와 `KAKAO_CLIENT_SECRET`은 기본값이 비어 있는데, `JWT_SECRET`만 기본값이 들어 있다.
 - **상태**: 미결정
 
