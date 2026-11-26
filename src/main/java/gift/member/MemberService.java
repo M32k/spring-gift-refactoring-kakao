@@ -33,4 +33,12 @@ public class MemberService {
 
         return jwtProvider.createToken(member.getEmail());
     }
+
+    public String loginWithKakao(String email, String kakaoAccessToken) {
+        Member member = memberRepository.findByEmail(email).orElseGet(() -> new Member(email));
+        member.updateKakaoAccessToken(kakaoAccessToken);
+        memberRepository.save(member);
+
+        return jwtProvider.createToken(member.getEmail());
+    }
 }
