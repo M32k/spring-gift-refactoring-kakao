@@ -163,6 +163,7 @@
 - 커밋 메시지 예: `refactor: 상품 API 로직을 ProductService로 옮김`
 
 ### Op1. OptionController를 OptionService로
+끝: fc99c6d refactor: 옵션 로직을 OptionService로 옮김
 
 - 옵션명 검증, 중복 확인, "옵션이 1개면 삭제 불가", 다른 상품의 옵션이면 404를 그대로 옮긴다.
 - `Collectors.toList()`도 그대로 둔다.
@@ -171,6 +172,7 @@
 - 커밋 메시지 예: `refactor: 옵션 로직을 OptionService로 옮김`
 
 ### C1. CategoryController를 CategoryService로
+끝: fa6c010 refactor: 카테고리 로직을 CategoryService로 옮김
 
 - 수정할 때 없는 카테고리는 지금처럼 404로 둔다.
 - 바꾸는 파일: `src/main/java/gift/category/CategoryService.java`(새 파일), `src/main/java/gift/category/CategoryController.java`
@@ -178,6 +180,7 @@
 - 커밋 메시지 예: `refactor: 카테고리 로직을 CategoryService로 옮김`
 
 ### K1. 카카오 로그인 콜백의 회원 처리를 MemberService로
+끝: c4790fb refactor: 카카오 로그인 회원 처리를 MemberService로 옮김 (직접 카카오 로그인 후 주문 201 확인)
 
 - 회원 찾기·만들기와 카카오 액세스 토큰 저장, 로그인 토큰 발급을 옮긴다.
 - 카카오 로그인 주소 만들기(`/login`)는 컨트롤러에 남긴다.
@@ -187,6 +190,7 @@
 - 커밋 메시지 예: `refactor: 카카오 로그인 회원 처리를 MemberService로 옮김`
 
 ### A3. 컨트롤러와 서비스 계층 규칙 고정 (테스트만)
+끝: 0ab9356 test: 컨트롤러와 서비스 계층 규칙 추가 (Admin 제외 줄을 빼면 AdminProductController 위반 16건으로 실패하는 것 확인)
 
 - 규칙 A: A2와 같다. `AdminProductController`, `AdminMemberController`는 이름으로 빼고, 테스트 코드의 그 자리에 아래 "옮기지 않은 것" 표를 가리키는 주석을 단다.
 - 규칙 B: 이름이 `Service`로 끝나는 클래스는 `org.springframework.http..`, `org.springframework.web..`, `org.springframework.ui..`에 의존하지 않는다. 404와 `Model`은 컨트롤러가 맡는다.
@@ -195,6 +199,8 @@
 - 커밋 메시지 예: `test: 컨트롤러와 서비스 계층 규칙 추가`
 
 ### D1. 문서 정리
+끝(D1-a): 7bdff47 docs: 서비스 분리에 맞춰 코드 위치 갱신, 5df265e docs: 포매터 적용으로 밀린 코드 위치 갱신
+끝(D1-b): 1cdb264 docs: ArchUnit 명령과 3단계 인수 테스트 범위 반영
 
 - `docs/open-questions.md`, `docs/work/01-project-analysis/order-flow.md`, `AGENTS.md` 표의 `파일:줄`을 서비스 위치로 고친다. 작동 설명은 그대로 둔다.
 - `AGENTS.md`와 `docs/work/02-acceptance-test/test-strategy.md`에 ArchUnit 실행 명령을 더한다.
