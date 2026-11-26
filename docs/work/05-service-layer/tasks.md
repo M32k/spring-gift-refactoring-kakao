@@ -34,10 +34,10 @@
 
 | 컨트롤러 | 지금 인수 테스트 | 옮기기 전 안전망 |
 |---|---|---|
-| OrderController | 16-1~16-3, 17-1~17-4 | 필요: 오류 응답(L1) |
-| MemberController | 1-1~1-3 | 필요: 로그인 실패(스토리 2) |
-| WishController | 15-1 | 필요: 위시 목록, 담기(스토리 13, 14). 담기는 200과 201이 나뉜다 |
-| ProductController | 7-1~7-3 | 필요: 목록, 수정, 삭제(스토리 4, 8, 9) |
+| OrderController | 16-1~16-3, 17-1~17-4 | 끝(L1): `order.feature`(16-4~16-7) |
+| MemberController | 1-1~1-3 | 끝(L2): `login.feature`(2-1~2-3) |
+| WishController | 15-1 | 끝(L3): `wish-list.feature`(13-1~13-3), `wish-add.feature`(14-1~14-3), `wish.feature`(15-2~15-3) |
+| ProductController | 7-1~7-3 | 끝(L4): `product-view.feature`(4-1~4-4), `product-update.feature`(8-1~8-6), `product-delete.feature`(9-1~9-4) |
 | OptionController | 없음 | 끝(L5): `option-list.feature`(6-1~6-2), `option-create.feature`(11-1~11-6), `option-delete.feature`(12-1~12-7) |
 | CategoryController | 없음 | 필요: 스토리 5, 10 |
 | AdminProductController | 없음 | 이번에는 옮기지 않는다(아래 "옮기지 않은 것") |
@@ -45,6 +45,7 @@
 | KakaoAuthController | 없음. 만들 수 없음(카카오 서버) | 코드 검토와, 사용자가 직접 카카오 로그인해 보기 |
 
 ### L1. 주문하기 오류 응답 인수 테스트 추가 (테스트만)
+끝: `order.feature`(16-4~16-7)
 
 - `/acceptance-test 16`으로 다음 시나리오를 더한다. 주문 흐름 분석에서 요청으로 확인한 작동이다(`docs/work/01-project-analysis/order-flow.md`).
   - 없는 옵션: 404
@@ -58,9 +59,9 @@
 ### L2~L6. 나머지 안전망 (테스트만)
 
 - 위 표의 "필요" 줄마다 `/acceptance-test <스토리 번호>`로 하나씩 커밋한다.
-  - L2: 스토리 2(로그인 실패)
-  - L3: 스토리 13, 14(위시 목록, 담기)
-  - L4: 스토리 4, 8, 9(상품 목록, 수정, 삭제)
+  - L2: 스토리 2(로그인 실패). 끝: `login.feature`(2-1~2-3)
+  - L3: 스토리 13, 14(위시 목록, 담기). 끝: `wish-list.feature`(13-1~13-3), `wish-add.feature`(14-1~14-3), `wish.feature`(15-2~15-3)
+  - L4: 스토리 4, 8, 9(상품 목록, 수정, 삭제). 끝: `product-view.feature`(4-1~4-4), `product-update.feature`(8-1~8-6), `product-delete.feature`(9-1~9-4)
   - L5: 스토리 6, 11, 12(옵션 목록, 등록, 삭제). 끝: `option-list.feature`(6-1~6-2), `option-create.feature`(11-1~11-6), `option-delete.feature`(12-1~12-7)
   - L6: 스토리 5, 10(카테고리)
 - 관리자 화면 스토리 18~26은 넣지 않는다.
@@ -70,6 +71,7 @@
 - 커밋 메시지 예: `test: 옵션 등록·삭제 인수 테스트 추가`
 
 ### A1. ArchUnit 추가와 지금 통과하는 규칙 (테스트만)
+끝: ef45559 test: ArchUnit 계층 규칙 추가
 
 - 규칙 0: Repository는 Controller에 의존하지 않는다. 지금 코드에서 통과해야 한다.
 - 바꾸는 파일
@@ -79,6 +81,7 @@
 - 커밋 메시지 예: `test: ArchUnit 계층 규칙 추가`
 
 ### A2. 서비스 추출 전 커밋에서 규칙이 실패하는지 확인 (기록만)
+끝: bbbd4ab docs: ArchUnit 컨트롤러 규칙의 추출 전 실패 결과 기록
 
 - 규칙 A를 테스트 파일에 임시로 써서, A1 커밋 상태(서비스 추출 전)에서 돌린다.
   - 규칙 A: `@RestController`/`@Controller` 클래스는 `org.springframework.data.repository.Repository`에 의존하지 않는다. 단, `AdminProductController`와 `AdminMemberController`는 뺀다.
@@ -95,6 +98,7 @@
 ## 서비스로 옮기기
 
 ### O1. 주문 내역 조회를 OrderService로
+끝: 6ff1899 refactor: 주문 내역 조회를 OrderService로 옮김
 
 - `OrderService`(새 파일)를 만들고 `findOrders(Long memberId, Pageable pageable)`로 `orderRepository.findByMemberId(...).map(OrderResponse::from)`을 옮긴다.
 - 로그인 확인(`authenticationResolver.extractMember`)과 401 응답은 컨트롤러에 남긴다.
@@ -103,6 +107,7 @@
 - 커밋 메시지 예: `refactor: 주문 내역 조회를 OrderService로 옮김`
 
 ### O2. 주문하기(옵션 확인~주문 저장)를 OrderService로
+끝: f55d1ac refactor: 주문하기 로직을 OrderService로 옮김
 
 - `OrderService.createOrder(Member member, OrderRequest request)`로 옮긴다. 순서는 그대로 둔다.
   - 1) 옵션 확인, 2) 재고 차감과 저장, 3) 주문 금액 계산, 포인트 차감과 저장, 4) 주문 저장
@@ -114,6 +119,7 @@
 - 커밋 메시지 예: `refactor: 주문하기 로직을 OrderService로 옮김`
 
 ### O3. 주문 알림 발송을 OrderService로
+끝: ed27c9e refactor: 주문 알림 발송을 OrderService로 옮김
 
 - 주문 알림 메서드(03-style N5에서 이름을 바꿈)를 `OrderService`로 옮긴다. 주문 저장 바로 뒤에 부른다.
 - 카카오 액세스 토큰이 없으면 보내지 않는다. 모든 예외를 잡고 무시하며, 로그도 지금처럼 남기지 않는다(open-questions 10번).
@@ -123,6 +129,7 @@
 - 커밋 메시지 예: `refactor: 주문 알림 발송을 OrderService로 옮김`
 
 ### O4. OrderController 의존성 정리
+끝: 748532e refactor: OrderController 의존성 정리
 
 - `OrderController`에는 `AuthenticationResolver`와 `OrderService`만 남긴다.
 - `OrderRepository`, `OptionRepository`, `MemberRepository`, `KakaoMessageClient`는 서비스로 옮긴다. `WishRepository`는 04-unused-code의 U1에서 이미 지웠다.
@@ -131,6 +138,7 @@
 - 커밋 메시지 예: `refactor: OrderController 의존성 정리`
 
 ### M1. MemberController를 MemberService로
+끝: e32299f refactor: 회원 가입과 로그인을 MemberService로 옮김
 
 - 회원 가입(중복 확인, 저장, 로그인 토큰 발급)과 로그인(비밀번호 비교)을 옮긴다.
 - 메시지와 `@ExceptionHandler`는 그대로 둔다.
@@ -139,6 +147,7 @@
 - 커밋 메시지 예: `refactor: 회원 가입과 로그인을 MemberService로 옮김`
 
 ### W1. WishController를 WishService로
+끝: fbc3866 refactor: 위시 로직을 WishService로 옮김
 
 - 담기는 "이미 있음(200)"과 "새로 담음(201)"을, 삭제는 "없음(404)", "남의 위시(403)", "삭제함(204)"을 결과 값으로 돌려준다. HTTP 코드는 컨트롤러가 정한다.
 - 바꾸는 파일: `src/main/java/gift/wish/WishService.java`(새 파일), `src/main/java/gift/wish/WishController.java`
@@ -146,6 +155,7 @@
 - 커밋 메시지 예: `refactor: 위시 로직을 WishService로 옮김`
 
 ### P1. ProductController를 ProductService로
+끝: fcd59cc refactor: 상품 API 로직을 ProductService로 옮김
 
 - 상품명 검증(`validate(name)`, "카카오" 금지)과 확인 순서를 그대로 둔다.
 - 바꾸는 파일: `src/main/java/gift/product/ProductService.java`(새 파일), `src/main/java/gift/product/ProductController.java`
