@@ -24,18 +24,21 @@ public class OrderController {
     private final MemberRepository memberRepository;
     private final AuthenticationResolver authenticationResolver;
     private final KakaoMessageClient kakaoMessageClient;
+    private final OrderService orderService;
 
     public OrderController(
             OrderRepository orderRepository,
             OptionRepository optionRepository,
             MemberRepository memberRepository,
             AuthenticationResolver authenticationResolver,
-            KakaoMessageClient kakaoMessageClient) {
+            KakaoMessageClient kakaoMessageClient,
+            OrderService orderService) {
         this.orderRepository = orderRepository;
         this.optionRepository = optionRepository;
         this.memberRepository = memberRepository;
         this.authenticationResolver = authenticationResolver;
         this.kakaoMessageClient = kakaoMessageClient;
+        this.orderService = orderService;
     }
 
     @GetMapping
@@ -45,7 +48,7 @@ public class OrderController {
         if (member == null) {
             return ResponseEntity.status(401).build();
         }
-        var orders = orderRepository.findByMemberId(member.getId(), pageable).map(OrderResponse::from);
+        var orders = orderService.findOrders(member.getId(), pageable);
         return ResponseEntity.ok(orders);
     }
 
