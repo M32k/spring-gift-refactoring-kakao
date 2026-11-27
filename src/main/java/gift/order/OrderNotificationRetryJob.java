@@ -28,8 +28,7 @@ public class OrderNotificationRetryJob {
 
     public void retryOnce() {
         var createdBefore = LocalDateTime.now().minusMinutes(UNATTEMPTED_GRACE_MINUTES);
-        var targetIds =
-                orderNotificationRepository.findRetryTargetIds(OrderNotification.Status.PENDING, createdBefore);
+        var targetIds = orderNotificationRepository.findRetryTargetIds(OrderNotification.Status.PENDING, createdBefore);
         for (Long notificationId : targetIds) {
             try {
                 // 발송 실패는 dispatch가 시도 횟수와 마지막 오류로 기록한다.
