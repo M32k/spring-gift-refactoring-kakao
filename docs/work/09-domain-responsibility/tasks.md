@@ -156,6 +156,27 @@ expected: ["옵션 이름은 필수입니다."]
 - 확인 명령: 전체
 - 커밋 메시지 예: `refactor: 이름 검증 공통 규칙을 NameRule로 뽑음 (ADR 0005)`
 
+#### R2 한 일
+
+- `gift.product.NameRule`을 만들었다(tech-spec 2-3 모양).
+  - 생성자는 `public NameRule(String target, int maxLength)`, 메서드는 `public List<String> validate(String name)`이다.
+  - 허용 패턴은 이 클래스 한 곳에만 있다.
+  - 필수(`name == null || name.isBlank()`)이면 필수 메시지 하나만 담은 `ArrayList`를 돌려준다. 아니면 길이 → 특수 문자 순서로 검사한다.
+  - 메시지는 `target`과 `maxLength`만 끼워 만든다.
+  - 클래스 주석에 ADR 0005와 규칙(한국어)을 적었다.
+- `ProductNameValidator`
+  - `private static final NameRule RULE = new NameRule("상품", 15)`를 쓴다.
+  - `validate(name, allowKakao)`는 `RULE.validate(name)` 뒤에, `name == null || name.isBlank()`이면 그대로 돌려주고, 아니면 카카오 규칙만 더한다. 메시지 문자열에 기대는 분기는 없다.
+- `OptionNameValidator`
+  - `new NameRule("옵션", 50)`에 맡긴다.
+  - 위쪽 영어 규칙 주석은 한국어로 바꾸고 ADR 0005를 가리킨다.
+- 두 Validator의 `MAX_LENGTH`, `ALLOWED_PATTERN` 상수는 지웠다. public 시그니처와 부르는 곳(`ProductService:64`, `AdminProductController:45,78`, `OptionService:78`)은 그대로다.
+- `docs/adr/0005-name-rule-in-product.md`를 0004 형식으로 썼다.
+  - 고려한 선택지: 패턴만 공유, 값 객체, `gift.common` 새 패키지
+  - 결과의 생기는 문제: tech-spec ADR 표 그대로
+- 테스트는 고치지 않았다.
+- `./gradlew build` 성공(2026-11-27): spotlessCheck 통과. 인수 테스트 81개, ArchUnit 3개, ProductNameValidatorTest 12개, OptionNameValidatorTest 7개, KakaoMessageClientTest 3개, OrderNotificationMessageTest 1개 모두 통과.
+
 ### D. 문서 정리
 
 - `open-questions.md` 2번, 29번: 금액 계산 근거를 `Product.totalPrice`로 맞춘다.
