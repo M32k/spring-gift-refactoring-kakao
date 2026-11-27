@@ -65,6 +65,10 @@ public class OrderService {
         // save order
         var saved = orderRepository.save(new Order(option, member.getId(), request.quantity(), request.message()));
 
+        // 6. cleanup wish: 주문마다 발행하고, 커밋 뒤 gift.wish가 받는다(docs/work/08-wish-cleanup/tech-spec.md 4장).
+        eventPublisher.publishEvent(new OrderPlacedEvent(
+                saved.getId(), member.getId(), option.getProduct().getId()));
+
         // ADR 0002: 주문 알림을 같은 트랜잭션에 저장하고, 커밋 뒤 OrderNotificationRelay가 보낸다.
         saveOrderNotificationIfPossible(member, saved, option);
         return Optional.of(saved);

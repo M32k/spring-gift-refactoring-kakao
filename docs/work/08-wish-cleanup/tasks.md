@@ -48,6 +48,16 @@
 - 확인 명령: 전체
 - 커밋 메시지 예: `refactor: 주문마다 OrderPlacedEvent 발행`
 
+#### R2 한 일
+
+- `gift.order.OrderPlacedEvent(Long orderId, Long memberId, Long productId)` record를 만들었다.
+- `OrderService.createOrder`에서 주문 저장 바로 뒤, 주문 알림 저장(`saveOrderNotificationIfPossible`)보다 앞에 `eventPublisher.publishEvent(new OrderPlacedEvent(..))`를 넣었다.
+  - 카카오 액세스 토큰과 상관없이 성공한 주문마다 발행된다.
+  - 주석은 tech-spec 4장을 가리킨다. ADR 0003은 B1에서 생기므로 적지 않았다.
+- 받는 리스너는 없다. `gift.wish`, 테스트, feature 파일은 그대로다. `@Transactional`은 새로 붙이지 않았다.
+- 처음 쓴 발행 줄이 121자라 spotlessCheck가 실패했다. 포매터가 보여 준 모양(인자를 다음 줄로)으로 고쳤다.
+- `./gradlew build` 성공(2026-11-27): spotlessCheck 통과. 인수 테스트 75개, ArchUnit 3개, KakaoMessageClientTest 3개 모두 통과.
+
 ### T1. 위시 정리 감싸개와 단계 정의 (테스트만)
 
 - `src/test/java/gift/acceptance/FailableWishCleaner.java`(`@Component @Primary`): 평소에는 진짜 `RepositoryWishCleaner`에 맡기고, 정해 두면 예외를 던진다. 시나리오마다 초기화한다.
