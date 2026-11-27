@@ -8,6 +8,7 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class OrderService {
@@ -39,6 +40,8 @@ public class OrderService {
     // 5. save order
     // 6. cleanup wish
     // 7. send kakao notification
+    // ADR 0001: 재고·포인트·주문 저장을 한 트랜잭션으로 묶는다. 응답 코드는 500 그대로.
+    @Transactional
     public Optional<Order> createOrder(Member member, OrderRequest request) {
         // validate option
         var option = optionRepository.findById(request.optionId()).orElse(null);
