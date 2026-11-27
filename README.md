@@ -2,6 +2,8 @@
 
 ## 1단계 AI 활용 기록
 
+작업 과정을 풀어 쓴 글: [[NEXTSTEP] 레거시 분석과 인수 테스트, AI와 함께 하룻밤에 0단계부터 2단계까지](https://velog.io/@m32k/NEXTSTEP-%EB%A0%88%EA%B1%B0%EC%8B%9C-%EB%B6%84%EC%84%9D%EA%B3%BC-%EC%9D%B8%EC%88%98-%ED%85%8C%EC%8A%A4%ED%8A%B8-AI%EC%99%80-%ED%95%A8%EA%BB%98-%ED%95%98%EB%A3%BB%EB%B0%A4%EC%97%90-0%EB%8B%A8%EA%B3%84%EB%B6%80%ED%84%B0-2%EB%8B%A8%EA%B3%84%EA%B9%8C%EC%A7%80) (velog)
+
 ### 1. AI에게 맡긴 일과 내가 직접 확인한 일
 
 **AI 도구**
@@ -79,6 +81,8 @@ AGENTS.md에는 저장소를 읽어서 알 수 없는 것과 다시 찾는 데 �
 
 ## 2단계 AI 활용 기록
 
+작업 과정을 풀어 쓴 글: [[NEXTSTEP] 레거시 분석과 인수 테스트, AI와 함께 하룻밤에 0단계부터 2단계까지](https://velog.io/@m32k/NEXTSTEP-%EB%A0%88%EA%B1%B0%EC%8B%9C-%EB%B6%84%EC%84%9D%EA%B3%BC-%EC%9D%B8%EC%88%98-%ED%85%8C%EC%8A%A4%ED%8A%B8-AI%EC%99%80-%ED%95%A8%EA%BB%98-%ED%95%98%EB%A3%BB%EB%B0%A4%EC%97%90-0%EB%8B%A8%EA%B3%84%EB%B6%80%ED%84%B0-2%EB%8B%A8%EA%B3%84%EA%B9%8C%EC%A7%80) (velog)
+
 ### 1. AI에게 맡긴 일과 내가 직접 확인한 일
 
 **AI 도구**
@@ -143,6 +147,8 @@ AGENTS.md에는 저장소를 읽어서 알 수 없는 것과 다시 찾는 데 �
 | 기대값을 바꾼 뒤 실행이 0.9초 만에 BUILD SUCCESSFUL로 끝남 | 파일을 grep으로 확인하니 바뀌지 않았고, Gradle이 이전 결과를 다시 씀 | 파일을 고친 뒤 다시 실행해 16-2 실패를 확인함. 통과 결과만 보고 믿지 않기로 함 |
 
 ## 3단계 AI 활용 기록
+
+작업 과정을 풀어 쓴 글: [[NEXTSTEP] 리팩터링과 구조 변경 : 작동은 그대로, 구조만 바꾸기](https://velog.io/@m32k/NEXTSTEP-%EB%A6%AC%ED%8C%A9%ED%84%B0%EB%A7%81%EA%B3%BC-%EC%9E%91%EB%8F%99-%EB%B3%80%EA%B2%BD-%EC%9E%91%EB%8F%99%EC%9D%80-%EA%B7%B8%EB%8C%80%EB%A1%9C-%EA%B5%AC%EC%A1%B0%EB%A7%8C-%EB%B0%94%EA%BE%B8%EA%B8%B0) (velog)
 
 ### 1. AI에게 맡긴 일과 내가 직접 확인한 일
 
@@ -227,6 +233,8 @@ AGENTS.md에는 저장소를 읽어서 알 수 없는 것과 다시 찾는 데 �
 - 포맷 검사와 ArchUnit을 빌드와 테스트에 묶어, 범위 밖 변경이나 계층 위반이 생기면 바로 실패하게 했다.
 
 ## 4단계 AI 활용 기록
+
+작업 과정을 풀어 쓴 글: [[NEXTSTEP] 리팩터링과 작동 변경 : 테스트를 먼저 고치고, 작동을 바꾸기](https://velog.io/@m32k/NEXTSTEP-%EB%A6%AC%ED%8C%A9%ED%84%B0%EB%A7%81%EA%B3%BC-%EC%9E%91%EB%8F%99-%EB%B3%80%EA%B2%BD-%ED%85%8C%EC%8A%A4%ED%8A%B8%EB%A5%BC-%EB%A8%BC%EC%A0%80-%EA%B3%A0%EC%B9%98%EA%B3%A0-%EC%9E%91%EB%8F%99%EC%9D%84-%EB%B0%94%EA%BE%B8%EA%B8%B0) (velog)
 
 ### 1. AI에게 맡긴 일과 내가 직접 확인한 일
 
