@@ -169,6 +169,7 @@ but could not find the following elements:
 확인한 뒤 feature를 되돌렸고, `./gradlew build`로 80개 통과를 다시 확인했다.
 
 ### D. 문서 정리
+끝: 07c3286 docs: 위시 정리 결과를 문서에 반영 (ADR 0003)
 
 tech-spec 11장대로 한다.
 - `AGENTS.md` "코드가 오해를 부르는 곳"의 `// order flow:` 줄: "6. cleanup wish"가 이제 커밋 뒤 `gift.wish`의 리스너에서 일어난다고 적고 줄 번호를 맞춘다.
