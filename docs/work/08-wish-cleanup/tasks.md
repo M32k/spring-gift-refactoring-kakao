@@ -88,24 +88,81 @@
 - 코드
   - `gift.wish`에 `OrderPlacedEvent`를 받는 `@TransactionalEventListener(AFTER_COMMIT)` 리스너를 둔다(예: `OrderWishCleanupListener`).
   - `REQUIRES_NEW` 트랜잭션에서 `WishCleaner.clean`을 부른다.
-  - 실패는 warn 로그로 남기고 주문 응답(201)으로 새어 나가지 않게 한다. 빈 catch는 만들지 않는다.
+  - 실패는 리스너의 catch가 잡아 warn 로그로 남긴다. 빈 catch는 만들지 않는다.
 - 코드를 바꾼 뒤 W-5에서 "위시 정리가 실패한다"를 빼서 위시 단계에서 실패하는지 확인하고, "W-5 일부러 틀린 결과"에 붙인다. 확인한 뒤 되돌린다.
 - 코드 주석과 커밋 메시지에 ADR 0003을 적는다. `docs/adr/0003-wish-cleanup-after-order-commit.md`를 같은 커밋에 넣는다.
-- 바꾸는 파일: `wish-cleanup.feature`, 이 파일, 리스너(새 파일), ADR 0003
+- 바꾸는 파일: `wish-cleanup.feature`, 이 파일, `OrderWishCleanupListener.java`(새 파일), `OrderWishCleanupExecutor.java`(새 파일), ADR 0003, tech-spec 4장(리스너와 트랜잭션 빈을 나눈 이유)
 - 확인 명령: 전체
 - 커밋 메시지 예: `feat: 주문 커밋 뒤 주문한 상품을 위시에서 뺌 (ADR 0003)`
+
+#### B1 한 일
+
+- 빈을 둘로 나눴다(07의 `OrderNotificationRelay`/`OrderNotificationDispatcher`와 같은 구조).
+  - `gift.wish.OrderWishCleanupListener`: `@TransactionalEventListener(AFTER_COMMIT)`로 `OrderPlacedEvent`를 받는다. 트랜잭션은 없다. `OrderWishCleanupExecutor.cleanUp`을 `try/catch`로 감싸고, 실패하면 warn 로그(주문 번호, 회원 번호, 상품 번호, 예외 메시지)를 남긴다.
+  - `gift.wish.OrderWishCleanupExecutor`: `@Transactional(REQUIRES_NEW) cleanUp(event)`가 `WishCleaner.clean(memberId, productId)`를 부른다.
+- REQUIRES_NEW를 리스너와 다른 빈에 둔 이유를 정정했다.
+  - 처음에는 "리스너 메서드에 붙이면 커밋 때 예외로 주문 응답이 500이 될 수 있다"고 설명했다. 이것은 틀렸다. AFTER_COMMIT 리스너는 afterCompletion에서 불리고, 여기서 난 예외는 Spring이 error 로그만 남기고 삼켜서 응답은 201 그대로다(spring-tx 6.2 `TransactionSynchronizationUtils.invokeAfterCompletion`).
+  - 나누는 이유는 둘이다. 커밋 때 나는 예외까지 우리 catch가 잡아 warn 로그를 남기려는 것이고, 같은 빈 안의 호출은 프록시를 거치지 않아 `@Transactional`이 걸리지 않기 때문이다. tech-spec 4장과 ADR 0003 "결정"에 이 이유로 적었다.
+- 증거(같은 테스트 출력)
+  - 우리 warn 로그가 남았다: `위시 정리 실패: orderId=5, memberId=2, productId=3, message=가짜 위시 정리 실패`
+  - Spring의 `afterCompletion threw exception` error 로그는 0건이다. 예외를 Spring이 아니라 우리 catch가 잡았다는 뜻이다.
+- `./gradlew build` 성공(2026-11-27): spotlessCheck 통과. 인수 테스트 80개, ArchUnit 3개, KakaoMessageClientTest 3개 모두 통과.
 
 #### B1 바꾸기 전 실패 출력
 
 ```
-(사용자가 붙인다)
+$ ./gradlew test --tests 'gift.acceptance.CucumberTest' --rerun-tasks
+80 tests completed, 2 failed
+
+16-15. 위시에 담은 상품을 주문하면 그 위시가 빠진다 FAILED
+java.lang.AssertionError:
+Expecting actual:
+  [1, 2]
+to contain exactly in any order:
+  [1]
+but the following elements were unexpected:
+  [2]
+    at gift.acceptance.steps.WishSteps.wishIdsAre(WishSteps.java:38)
+    at ✽.user1의 위시 번호는 1이다(classpath:features/wish-cleanup.feature:12)
+
+16-17. 다른 회원의 같은 상품 위시는 남는다 FAILED
+java.lang.AssertionError:
+Expecting actual:
+  [1, 2, 5]
+to contain exactly in any order:
+  [1, 2]
+but the following elements were unexpected:
+  [5]
+    at gift.acceptance.steps.WishSteps.wishIdsAre(WishSteps.java:38)
+    at ✽.user1의 위시 번호는 1, 2다(classpath:features/wish-cleanup.feature:31)
 ```
+
+해석: 리스너가 없어서 위시 2(상품 3), 새 위시 5(상품 5)가 남는다. 16-16, 16-18, 16-19는 통과.
 
 #### W-5 일부러 틀린 결과
 
 ```
-(사용자가 붙인다)
+# 16-19에서 "And 위시 정리가 실패한다" 줄을 빼고 돌림
+$ ./gradlew test --tests 'gift.acceptance.CucumberTest' --rerun-tasks
+80 tests completed, 1 failed
+
+16-19. 위시 정리가 실패해도 주문은 201이고 위시는 남는다 FAILED
+java.lang.AssertionError:
+Expecting actual:
+  [1]
+to contain exactly in any order:
+  [1, 2]
+but could not find the following elements:
+  [2]
+    at gift.acceptance.steps.WishSteps.wishIdsAre(WishSteps.java:38)
+    at ✽.user1의 위시 번호는 그대로 1, 2다(classpath:features/wish-cleanup.feature:49)
 ```
+
+해석:
+- 실패 설정을 빼면 정리가 정상으로 돌아 위시 2가 빠진다. 16-19는 "실패 설정이 있을 때 위시가 남는다"를 실제로 확인한다. (:49는 한 줄을 뺀 파일 기준)
+- 이 출력에는 "위시 정리 실패" warn 로그가 0건이다. B1 빌드의 warn 로그 1건은 실패 설정 때문에 생긴 것이다.
+
+확인한 뒤 feature를 되돌렸고, `./gradlew build`로 80개 통과를 다시 확인했다.
 
 ### D. 문서 정리
 
@@ -116,8 +173,9 @@ tech-spec 11장대로 한다.
 - `docs/work/05-service-layer/tasks.md` "작동 변경 후보"의 "위시 정리 구현" 줄: 지우지 않고 끝에 "(08에서 구현, ADR 0003)"을 붙인다.
 - `user-stories.md` 16번: 비고와 인수 조건(`wish-cleanup.feature` 16-15~16-19)을 더한다.
 - R2로 밀린 `OrderService.java` 줄 번호를 맞춘다.
+- 07 OrderNotificationRelay의 catch 주석('주문 응답(201)에는 새어 나가지 않게 한다')의 이유를 ADR 0003 정정에 맞춘다.
 - 이 파일에 끝 표시를 한다.
-- 바꾸는 파일: `AGENTS.md`, `docs/open-questions.md`, `docs/work/05-service-layer/tasks.md`, `docs/user-stories.md`, 이 파일
+- 바꾸는 파일: `AGENTS.md`, `docs/open-questions.md`, `docs/work/05-service-layer/tasks.md`, `docs/user-stories.md`, `src/main/java/gift/order/OrderNotificationRelay.java`(주석만), 이 파일
 - 확인 명령: 없음(문서만)
 - 커밋 메시지 예: `docs: 위시 정리 결과를 문서에 반영 (ADR 0003)`
 

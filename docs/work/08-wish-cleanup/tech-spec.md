@@ -53,7 +53,11 @@
 
 ## 4. 구조: 이벤트 비교
 
-07처럼 주문 트랜잭션 안에서 이벤트를 발행한다. 그러면 `@TransactionalEventListener(AFTER_COMMIT)` 리스너가 `REQUIRES_NEW`에서 위시를 지운다.
+07처럼 주문 트랜잭션 안에서 이벤트를 발행한다. `@TransactionalEventListener(AFTER_COMMIT)` 리스너(`OrderWishCleanupListener`)가 받아, 별도 빈(`OrderWishCleanupExecutor`)의 `REQUIRES_NEW` 트랜잭션에서 위시를 지운다. 리스너에는 트랜잭션을 붙이지 않는다(07의 `OrderNotificationRelay`/`OrderNotificationDispatcher`와 같은 구조).
+- 빈을 나누는 이유는 둘이다.
+  - 커밋 때 나는 예외까지 리스너의 catch가 잡아 warn 로그를 남기게 하려는 것이다. 트랜잭션은 메서드가 끝난 뒤 프록시에서 커밋되므로, 리스너 메서드에 트랜잭션을 붙이면 커밋 때 예외가 그 catch 밖에서 난다.
+  - 같은 빈 안의 호출은 프록시를 거치지 않아 `@Transactional`이 걸리지 않는다.
+- 응답 코드 때문은 아니다. AFTER_COMMIT 리스너는 afterCompletion에서 불리고, 여기서 난 예외는 Spring이 error 로그만 남기고 삼킨다(spring-tx 6.2 `TransactionSynchronizationUtils.invokeAfterCompletion`). 그래서 리스너 밖으로 예외가 나가도 응답은 201 그대로다.
 
 | | A. 07의 `OrderNotificationCreatedEvent`를 같이 쓴다 | B. 주문마다 새 이벤트(`OrderPlacedEvent(orderId, memberId, productId)`) |
 |---|---|---|
