@@ -107,11 +107,44 @@ expected: ... "text": "🎁 선물이 도착했어요!\n\n맥북 (스페이스 �
 - 확인 명령: 전체
 - 커밋 메시지 예: `test: 이름 검증 메시지를 고정하는 특성화 테스트 추가`
 
+#### T2 한 일
+
+- `src/test/java/gift/product/ProductNameValidatorTest.java`(12개)와 `src/test/java/gift/option/OptionNameValidatorTest.java`(7개)를 만들었다. 결과 목록 전체를 `isEqualTo(List.of(...))`로 비교한다.
+- 기대 메시지는 tech-spec 표가 아니라 지금 Validator 소스에서 그대로 복사했다.
+- 다룬 경우(tech-spec 2-4)
+  - null, `""`, `"   "` → 필수 하나뿐(상품, 옵션)
+  - 경계: 상품 15자(`무지개 우산 대형 세트 AB`) 통과, 16자 길이 메시지. 옵션 50자(`"가 "` × 25) 통과, 51자 길이 메시지. 길이는 `hasSize`로 함께 확인한다.
+  - 특수 문자 하나(`골드*`)
+  - 길이 + 특수 문자 → 길이, 특수 문자 순서
+  - 상품 카카오: false면 붙고, true면 안 붙고, `validate(name)`은 `validate(name, false)`와 같다.
+  - 상품 16자 + 특수 문자 + 카카오(`카카오 무지개 우산 세트 A*`) → 길이, 특수 문자, 카카오 순서
+  - `"   "` + `allowKakao = false` → 필수 하나뿐
+- 처음엔 특수 문자 메시지 상수가 한 줄에 너무 길어 spotlessCheck가 실패했다. 포매터가 보여 준 모양(값을 다음 줄로)으로 고쳤다. 메시지 문자열은 그대로다.
+- `src/main`은 고치지 않았다.
+- `./gradlew build` 성공(2026-11-27): spotlessCheck 통과. 인수 테스트 81개, ArchUnit 3개, KakaoMessageClientTest 3개, OrderNotificationMessageTest 1개, ProductNameValidatorTest 12개, OptionNameValidatorTest 7개 모두 통과.
+
 #### T2 일부러 틀린 결과
 
 ```
-(사용자가 붙인다)
+# R2에서 날 수 있는 실수를 흉내 냄: src/main 메시지에서 마침표 하나씩 뺌
+#   ProductNameValidator 길이 메시지 "...입력할 수 있습니다." → "...입력할 수 있습니다"
+#   OptionNameValidator 필수 메시지 "옵션 이름은 필수입니다." → "옵션 이름은 필수입니다"
+$ ./gradlew test --tests 'gift.product.ProductNameValidatorTest' --tests 'gift.option.OptionNameValidatorTest' --rerun-tasks
+19 tests completed, 6 failed
+
+ProductNameValidatorTest > 공백을_포함해_16자인_이름은_길이_메시지가_나온다() FAILED
+expected: ["상품 이름은 공백을 포함하여 최대 15자까지 입력할 수 있습니다."]
+ but was: ["상품 이름은 공백을 포함하여 최대 15자까지 입력할 수 있습니다"]
+ProductNameValidatorTest > 길이와_특수_문자가_함께_틀리면_길이_특수_문자_순서다() FAILED
+ProductNameValidatorTest > 길이와_특수_문자와_카카오가_함께_틀리면_세_메시지가_이_순서다() FAILED
+OptionNameValidatorTest > 이름이_없거나_공백뿐이면_필수_메시지_하나뿐이다(String) > [1] name=null, [2] name=, [3] name=    FAILED
+expected: ["옵션 이름은 필수입니다."]
+ but was: ["옵션 이름은 필수입니다"]
 ```
+
+해석:
+- 마침표 하나만 달라도 그 메시지를 쓰는 테스트가 모두 실패한다. 인수 테스트는 부분 문자열만 봐서 이 차이를 못 잡는다. 그래서 R2(메시지를 틀로 만들기) 전에 이 단위 테스트가 필요하다.
+- 확인한 뒤 src/main 두 파일을 git checkout으로 되돌렸고, `./gradlew build`로 모두 통과를 다시 확인했다.
 
 ### R2. 이름 검증 공통 규칙을 NameRule로 (ADR 0005)
 
