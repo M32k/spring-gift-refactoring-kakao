@@ -190,3 +190,25 @@ expected: ["옵션 이름은 필수입니다."]
 - 바꾸는 파일: `docs/open-questions.md`, 이 파일(그 밖은 줄 번호가 밀린 곳)
 - 확인 명령: 없음(문서만)
 - 커밋 메시지 예: `docs: 도메인 책임 되찾기 결과를 문서에 반영`
+
+### 검토 반영(4단계 마지막)
+
+이 항목은 고친 뒤에 적었다. 코드를 고치기 전에 tasks.md에 적는 규칙을 이번에는 지키지 못했다.
+
+새 세션에서 4단계 커밋(579025e..ed998d2)을 검토했다. 문제 1건, 확인 필요 9건이 나왔다.
+
+고친 것(4건):
+- 문제 1 open-questions 9번: 지워진 `wishRepository`의 `OrderController.java:26`, `:34`, `:41`에 "3단계 전 코드"를 붙였다.
+- 확인 4 코드 주석의 docs/work 참조: `OrderService.java:68`, `OrderPlacedEvent.java:3`, `WishRepository.java:13`은 ADR 0003으로, `OrderNotificationRelay.java:11`의 tech-spec 괄호는 지웠다(이미 ADR 0002). `RepositoryWishCleaner.java:7`은 ADR 0003에 unique 이야기가 없어서 `V1__Initialize_project_tables.sql`을 가리키게 했다. 주석만 바꿨다.
+- 확인 5 ADR 0002 "결정"의 재시도 문장: `findRetryTargetIds` 조건(실패한 "보낼 것" + 만든 지 1분이 넘은 시도 0번)과 "결과"에 맞추고 "(B2에서 넣는다)"를 지웠다. ADR 맨 아래에 고친 날짜를 남겼다.
+- 확인 9 README의 "AGENTS.md:49": 1666b5e 뒤 줄이 밀려서 "AGENTS.md 4단계 작업 규칙의 ADR 줄"로 바꿨다.
+
+그대로 둔 것(6건):
+- 확인 1 refactor 커밋(306c8c8, 7514f3d)의 KakaoMessageClientTest 수정: 시그니처가 바뀐 호출부만 고쳤고 기대값은 그대로다. AGENTS.md는 인수 테스트만 막는다.
+- 확인 2 docs 커밋(07c3286, b0c1c63)의 코드 주석 수정: 주석만 바뀌어 작동은 그대로다. 이미 커밋된 이력이다.
+- 확인 3 ADR보다 먼저 들어간 구조 변경(251ef38, 7514f3d, e4e420b): "구조를 먼저 바꾼다" 규칙을 따른 순서이고, 그때 코드 주석은 아직 없는 ADR을 가리키지 않았다.
+- 확인 6 위시 정리 실패 warn 로그를 테스트가 증명하지 않음: ADR 0003 "결과"에 이미 적힌 한계다.
+- 확인 7 KakaoMessageClientTest의 `server.verify()`: 요청 주소, 헤더, 본문까지 보는 특성화 테스트라 호출 여부만 보는 테스트가 아니다.
+- 확인 8 test 커밋(41d5384)에 들어간 open-questions 29번: 특성화 테스트가 고정하는 작동의 근거라 함께 넣었다. 이미 커밋된 이력이다.
+
+- `./gradlew build --rerun-tasks` 성공(2026-11-27): spotlessCheck 통과, 테스트 107개 모두 통과. RepositoryWishCleaner 주석을 고친 뒤 다시 돌려도 성공.

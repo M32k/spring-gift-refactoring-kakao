@@ -315,7 +315,7 @@
 ### 9. OrderController가 WishRepository를 주입받지만 사용하지 않는다
 
 - **작동**: `wishRepository` 필드를 선언하고 생성자에서 주입받지만, 어떤 메서드에서도 쓰지 않는다.
-- **확인한 방법**: 코드 읽기. 파일 안에서 `wishRepository`는 선언(`OrderController.java:26`), 생성자 매개변수(`:34`), 대입(`:41`)에만 나온다.
+- **확인한 방법**: 코드 읽기. 파일 안에서 `wishRepository`는 선언(`OrderController.java:26`, 3단계 전 코드), 생성자 매개변수(`:34`, 3단계 전 코드), 대입(`:41`, 3단계 전 코드)에만 나온다.
 - **이유가 코드에 있는지**: 직접적인 설명은 없다. 8번의 "위시 정리" 단계에 쓰려고 넣은 것으로 보이지만, 이것은 추정이다.
 - **상태**: 3단계에서 지움, 근거는 05-service-layer/tasks.md 작동 변경 후보. 위시 정리는 08에서 OrderController가 아닌 gift.wish 리스너로 구현함(ADR 0003)
 

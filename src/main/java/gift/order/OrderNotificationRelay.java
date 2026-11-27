@@ -8,7 +8,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 
 /**
  * 주문이 커밋된 직후 주문 알림을 한 번 보낸다.
- * ADR 0002: 요청과 같은 스레드에서 보낸다(tech-spec 6장 결정 A). 실패한 알림은 재시도가 다시 보낸다.
+ * ADR 0002: 요청과 같은 스레드에서 보낸다. 실패한 알림은 재시도가 다시 보낸다.
  */
 @Component
 public class OrderNotificationRelay {

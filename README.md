@@ -291,7 +291,7 @@ AGENTS.md에는 저장소를 읽어서 알 수 없는 것과 다시 찾는 데 �
 |---|---|---|---|
 | "리스너 메서드에 `REQUIRES_NEW`를 붙이면 커밋 때 예외로 응답이 500이 된다" | Claude Code 설명 / Claude 채팅이 지적 | 고침. AFTER_COMMIT 리스너 예외는 Spring이 afterCompletion에서 삼켜 201 그대로다. 빈을 나누는 이유를 "우리 catch로 warn 로그를 남기려고, 같은 빈 호출은 프록시를 안 거쳐서"로 바꿔 적음 | 08 tasks.md "B1 한 일", 08 tech-spec 4장, ADR 0003 결정 |
 | 09 넘침 인수 테스트를 640개 주문으로 | Claude Code 선택지 / Claude 채팅이 계산해 1,279개 제안 | 거절. 640개는 넘치지 않아도 포인트 부족으로 500이라 넘침을 구별하지 못함. 넘친 값이 포인트 안에 들어오는 1,279개로 | 09 tech-spec 1-3, `order.feature` 16-20 |
-| 09 "ADR을 남기지 않는다" | Claude Code / Claude 채팅이 AGENTS.md:49로 지적 | 거절. AGENTS.md 규칙에 맞춰 0004·0005 두 개로 나눔. 하나로 묶어 R2에 넣으면 R1의 코드 주석이 아직 없는 ADR을 가리켜서 | 09 tech-spec "ADR 판단", 커밋 `dced891`, `57ee333` |
+| 09 "ADR을 남기지 않는다" | Claude Code / Claude 채팅이 AGENTS.md 4단계 작업 규칙의 ADR 줄로 지적 | 거절. AGENTS.md 규칙에 맞춰 0004·0005 두 개로 나눔. 하나로 묶어 R2에 넣으면 R1의 코드 주석이 아직 없는 ADR을 가리켜서 | 09 tech-spec "ADR 판단", 커밋 `dced891`, `57ee333` |
 | 09 T2 일부러 틀리기를 테스트 기대값으로 | Claude Code가 테스트 기대값 제안 / Claude 채팅이 `src/main` 제안 | 고침. `src/main` 메시지에서 마침표 하나를 빼서 R2에서 날 실수를 흉내 냄 | 09 tasks.md "T2 일부러 틀린 결과" |
 | 08 R1에서 `WishRepository` 주석이 아직 없는 ADR 0003을 가리킴 | Claude Code / Claude 채팅이 diff로 확인 | 고침. tech-spec 2장을 가리키게 함 | `WishRepository.java` 주석, 커밋 `ac0f694` |
 | 08 파생 delete가 돌려주는 지운 개수(long)를 리스너 로그에 쓰기 | Claude 채팅이 낸 제안 / Claude Code가 `void clean`으로는 받을 수 없다고 지적 | 거절. tech-spec이 정한 로그는 실패 warn 하나이고 확인은 위시 목록 API로 해서, `clean`은 `void` 그대로 | 08 tasks.md "R1 한 일" |
@@ -314,6 +314,7 @@ AI가 처음 낸 제안 중 일부는 커밋 전에 고쳐져 저장소에 남�
 | 07 B2를 포맷 확인 없이 커밋해서 `style:` 커밋(`c24903a`)을 따로 만듦. 그 뒤에도 spotlessCheck 실패가 여러 번 남(08 R2, 09 T2) | 빌드 실패 | 커밋 전에 `./gradlew build`를 돌리는 규칙을 AGENTS.md에 적음 |
 | 일부러 틀린 출력을 남기기 전에 다시 빌드해서 결과 파일이 덮어써짐 | 결과 파일 확인 | 틀린 결과는 `build/` 안에 따로 복사해 두고 바로 tasks.md에 붙임(AGENTS.md) |
 | 09 R2에서 두 Validator를 읽지 않고 써서 쓰기가 거절됨. 그 상태로 돈 첫 빌드는 바뀌지 않은 코드를 검사한 것이라 의미가 없었음 | AI가 결과를 보고 알림 | 두 파일을 읽고 다시 쓴 뒤 빌드를 다시 돌림. 09 tasks.md에는 다시 돌린 결과만 적음 |
+| 4단계 마지막 검토 반영(4건)을 tasks.md에 적기 전에 고침 | Claude Code가 고친 뒤 알림 | 09 tasks.md "검토 반영(4단계 마지막)"에 고친 뒤 적었다고 밝혀 둠 |
 
 ### 5. AI가 요청 밖에서 바꾸려 한 것과 멈추거나 되돌린 방법
 
