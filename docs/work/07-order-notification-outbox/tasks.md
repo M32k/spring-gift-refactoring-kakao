@@ -139,9 +139,32 @@ expected: 1
 
 #### B2 실패 출력
 
+- 날짜: 2026-11-27, 재시도 코드를 넣기 전(빈 `OrderNotificationRetryJob`)
+- 명령: `./gradlew test --tests 'gift.acceptance.CucumberTest' --rerun-tasks`
+
 ```
-(사용자가 붙인다)
+CucumberTest > Cucumber > 16. 회원이 주문하면 카카오 주문 알림을 보낸다 > gift.acceptance.CucumberTest.16-9. 알림 발송이 실패해도 주문은 201이고, 재시도가 성공하면 알림이 "보냄"이 된다 FAILED
+    org.opentest4j.AssertionFailedError at OrderNotificationSteps.java:96
+
+CucumberTest > Cucumber > 16. 회원이 주문하면 카카오 주문 알림을 보낸다 > gift.acceptance.CucumberTest.16-12. 다섯 번 실패하면 알림이 "실패"가 되고 더 보내지 않는다 FAILED
+    org.opentest4j.AssertionFailedError at OrderNotificationSteps.java:96
+
+73 tests completed, 2 failed
 ```
+
+테스트 결과 파일의 실패 메시지:
+
+```
+16-9: [주문 알림 상태] expected: "SENT" but was: "PENDING"
+    at OrderNotificationSteps.notificationStatus(OrderNotificationSteps.java:96)
+    at 응답의 주문 알림은 "보냄", 시도 횟수 2다(features/order-notification.feature:41)
+
+16-12: [주문 알림 상태] expected: "FAILED" but was: "PENDING"
+    at OrderNotificationSteps.notificationStatus(OrderNotificationSteps.java:96)
+    at 응답의 주문 알림은 "실패", 시도 횟수 5다(features/order-notification.feature:70)
+```
+
+해석: 16-9, 16-12만 재시도 뒤 상태 단계에서 실패했다. 앞 단계(첫 발송 실패 → "보낼 것", 시도 1)는 통과했다. 빈 재시도가 아무것도 하지 않아 알림이 "보낼 것"으로 남았다. 나머지 71개는 통과.
 
 ### D. 문서 정리
 
@@ -155,8 +178,10 @@ expected: 1
   - 비고: 주문 알림은 아웃박스에 저장해 커밋 뒤 보내고, 실패하면 5번까지 다시 보낸다(ADR 0002).
   - 인수 조건 줄: `order-notification.feature (16-8~16-12)`를 더한다.
 - `AGENTS.md` "코드가 오해를 부르는 곳"의 `// order flow:` 줄: "7. send kakao notification"이 이제 커밋 뒤 리스너에서 일어난다는 점을 적고 줄 번호를 맞춘다.
+- ADR 0002 "결과"의 생기는 문제에 한 줄 더한다: "open-in-view가 켜져 있어 커밋 직후 발송 동안 요청의 DB 연결과 REQUIRES_NEW의 연결을 함께 잡을 수 있다(확인하지 않음)".
+- R1~B2로 밀리거나 옮겨 간 `파일:줄`을 맞춘다: `AGENTS.md`의 `KakaoMessageClient.java:9`, `OrderService.java` 줄, open-questions 2번(`KakaoMessageClient.java:33` → `OrderNotificationMessage`), 14번(`sendToMe` 이름과 줄).
 - 이 파일에 끝 표시를 한다.
-- 바꾸는 파일: `AGENTS.md`, `docs/work/02-acceptance-test/test-strategy.md`, `src/test/java/gift/acceptance/steps/MemberSteps.java`(주석만), `docs/adr/0001-order-transaction-boundary.md`, `docs/open-questions.md`, `docs/user-stories.md`, 이 파일
+- 바꾸는 파일: `AGENTS.md`, `docs/work/02-acceptance-test/test-strategy.md`, `src/test/java/gift/acceptance/steps/MemberSteps.java`(주석만), `docs/adr/0001-order-transaction-boundary.md`, `docs/adr/0002-order-notification-outbox.md`, `docs/open-questions.md`, `docs/user-stories.md`, 이 파일
 - 확인 명령: 인수 테스트(주석을 바꿨으므로 한 번)
 - 커밋 메시지 예: `docs: 주문 알림 아웃박스 결과를 문서에 반영 (ADR 0002)`
 

@@ -14,6 +14,8 @@ import java.time.LocalDateTime;
 @Table(name = "order_notification")
 public class OrderNotification {
     private static final int LAST_ERROR_MAX_LENGTH = 1000;
+    // ADR 0002: 5번까지 보낸다. 다섯 번째 실패에서 FAILED가 되고 더 보내지 않는다.
+    private static final int MAX_ATTEMPTS = 5;
 
     public enum Status {
         PENDING,
@@ -55,9 +57,13 @@ public class OrderNotification {
         this.sentAt = LocalDateTime.now();
     }
 
+    // 커밋 직후 발송과 재시도가 같은 규칙을 따른다.
     public void recordFailure(String error) {
         this.attemptCount++;
         this.lastError = truncate(error);
+        if (this.attemptCount >= MAX_ATTEMPTS) {
+            this.status = Status.FAILED;
+        }
     }
 
     // last_error 열은 varchar(1000)이다.

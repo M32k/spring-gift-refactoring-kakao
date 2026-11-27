@@ -6,9 +6,11 @@ import gift.acceptance.FakeOrderNotificationSender;
 import gift.acceptance.FakeOrderNotificationSender.Received;
 import gift.acceptance.Members;
 import gift.acceptance.ScenarioContext;
+import gift.order.OrderNotificationRetryJob;
 import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 import java.util.List;
 import java.util.Map;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -28,12 +30,17 @@ public class OrderNotificationSteps {
     private final ScenarioContext context;
     private final JdbcTemplate jdbcTemplate;
     private final FakeOrderNotificationSender sender;
+    private final OrderNotificationRetryJob retryJob;
 
     public OrderNotificationSteps(
-            ScenarioContext context, JdbcTemplate jdbcTemplate, FakeOrderNotificationSender sender) {
+            ScenarioContext context,
+            JdbcTemplate jdbcTemplate,
+            FakeOrderNotificationSender sender,
+            OrderNotificationRetryJob retryJob) {
         this.context = context;
         this.jdbcTemplate = jdbcTemplate;
         this.sender = sender;
+        this.retryJob = retryJob;
     }
 
     @Before
@@ -57,6 +64,14 @@ public class OrderNotificationSteps {
     @Given("^카카오 발송이 항상 실패한다$")
     public void failAlways() {
         sender.failAlways();
+    }
+
+    // 테스트에서는 주기 실행을 기다리지 않고 재시도 작업을 직접 부른다(tech-spec 7장).
+    @When("^주문 알림 재시도가 (\\d+)번 돈다$")
+    public void runRetry(int times) {
+        for (int i = 0; i < times; i++) {
+            retryJob.retryOnce();
+        }
     }
 
     @Then("^(user1|user2)의 주문 알림은 (\\d+)건이다$")
@@ -96,7 +111,7 @@ public class OrderNotificationSteps {
                 .contains(FakeOrderNotificationSender.FAILURE_MESSAGE);
     }
 
-    @Then("^카카오 발송기가 받은 알림은 (\\d+)건이다$")
+    @Then("^카카오 발송기가 받은 알림은 (?:그대로 )?(\\d+)건이다$")
     public void receivedCount(int expected) {
         assertThat(sender.received()).as("가짜 발송기가 받은 알림 수").hasSize(expected);
     }
