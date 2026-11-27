@@ -246,7 +246,7 @@ AGENTS.md에는 저장소를 읽어서 알 수 없는 것과 다시 찾는 데 �
 | 작업 | AI에게 맡긴 일 | 내가 직접 확인한 일 | 근거 |
 |---|---|---|---|
 | 06 주문 트랜잭션 | tech-spec, tasks.md, 16-2 기대값 고치기, `createOrder`에 `@Transactional`, ADR 0001 | 16-2가 코드를 바꾸기 전에 재고 단계에서 실패하는 것을 봄. 바꾼 뒤 같은 요청을 curl로 보내 500, 재고 10 그대로를 확인함 | `docs/work/06-order-transaction/tasks.md`, `docs/adr/0001-order-transaction-boundary.md` |
-| 07 주문 알림 아웃박스 | 발송 요청 고정 테스트(C0), 구조 변경 R1~R3, 가짜 발송기, 아웃박스 저장과 커밋 뒤 발송(B1), 재시도(B2), ADR 0002 | 커밋 직후 발송 방식(같은 스레드)과 재시도 대상 조건(시도 0번 + 1분)을 정함. B1, B2 실패 출력과 일부러 틀린 결과를 봄 | `docs/work/07-order-notification-outbox/`, `docs/adr/0002-order-notification-outbox.md` |
+| 07 주문 알림 아웃박스 | 발송 요청 고정 테스트(C0), 구조 변경 R1~R3, 가짜 발송기, 아웃박스 저장과 커밋 뒤 발송(B1), 재시도(B2), ADR 0002 | 커밋 직후 발송 방식(같은 스레드)과 재시도 대상 조건(시도 0번 + 1분)을 정함. B1, B2 실패 출력과 일부러 틀린 결과를 봄 | `docs/work/07-order-notification-outbox/`, `docs/adr/0002-order-notification-outbox.md`, `docs/adr/0006-order-notification-retry-target.md` |
 | 08 위시 정리 | 이벤트와 실패 만들기 방법 비교, `WishCleaner`, `OrderPlacedEvent`, 감싸개, 리스너와 실행 빈, ADR 0003 | Claude Code·Claude 채팅 추천을 보고 이벤트(B)와 실패 만들기(가)를 고름. 리스너에 대한 Claude Code 설명은 Claude 채팅이 spring-tx 소스로 확인한 정정을 받아들임 | `docs/work/08-wish-cleanup/`, `docs/adr/0003-wish-cleanup-after-order-commit.md` |
 | 09 도메인 책임 되찾기 | 금액 자리와 이름 검증 방법 비교, 특성화 테스트, `Product.totalPrice`, `NameRule`, ADR 0004·0005 | Claude 채팅이 계산한 넘침 수량 1,279개를 고름. ADR을 둘로 나누기, 일부러 틀리기를 `src/main` 메시지 한 글자로 하기도 Claude 채팅 제안을 고름 | `docs/work/09-domain-responsibility/`, `docs/adr/0004-order-total-price-in-product.md`, `docs/adr/0005-name-rule-in-product.md` |
 | AGENTS.md 정리 | 4단계 규칙, 문서 위치, 사실과 다른 줄 후보 찾기 | 후보 9개를 하나씩 정함. 연습 브랜치 줄은 Claude 채팅이 `git branch -a`로 확인했고, 나는 지울지 정함 | `AGENTS.md`, 커밋 `1666b5e` |
@@ -323,6 +323,7 @@ AI가 처음 낸 제안 중 일부는 커밋 전에 고쳐져 저장소에 남�
 | 일부러 틀린 출력을 남기기 전에 다시 빌드해서 결과 파일이 덮어써짐 | 결과 파일 확인 | 틀린 결과는 `build/` 안에 따로 복사해 두고 바로 tasks.md에 붙임(AGENTS.md) |
 | 09 R2에서 두 Validator를 읽지 않고 써서 쓰기가 거절됨. 그 상태로 돈 첫 빌드는 바뀌지 않은 코드를 검사한 것이라 의미가 없었음 | AI가 결과를 보고 알림 | 두 파일을 읽고 다시 쓴 뒤 빌드를 다시 돌림. 09 tasks.md에는 다시 돌린 결과만 적음 |
 | 4단계 마지막 검토 반영(4건)을 tasks.md에 적기 전에 고침 | Claude Code가 고친 뒤 알림 | 09 tasks.md "검토 반영(4단계 마지막)"에 고친 뒤 적었다고 밝혀 둠 |
+| ADR 본문을 나중에 고침(0001, 0002) | 미션 규칙("결정이 바뀌면 이전 ADR 본문은 고치지 않고 상태만 대체됨으로 바꾼 뒤 새 ADR을 쓴다")과 대조 | 미션 규칙대로 되돌리고 0006으로 분리. 0002 상태는 "일부 대체됨(재시도 대상: ADR 0006)" |
 
 ### 5. AI가 요청 밖에서 바꾸려 한 것과 멈추거나 되돌린 방법
 

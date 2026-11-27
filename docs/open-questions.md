@@ -352,6 +352,15 @@
 - **인수 테스트**: `src/test/resources/features/order.feature` 16-20(201, 포인트 2,527,296, 재고 721), 단위 `src/test/java/gift/order/OrderNotificationMessageTest.java`("2,472,704원")
 - **상태**: 4단계에서는 고치지 않음(구조 변경 작업인 [`docs/work/09-domain-responsibility/tech-spec.md`](work/09-domain-responsibility/tech-spec.md)에서 지금 작동으로 고정함). ADR 0004로 알면서 유지
 
+### 30. open-in-view가 켜져 있어 커밋 직후 발송 동안 DB 연결 두 개를 잡을 수 있다
+
+- **작동**: 주문이 커밋된 뒤 같은 요청 스레드에서 주문 알림을 보내고(`OrderNotificationRelay`), 결과는 새 트랜잭션(`OrderNotificationDispatcher`, `REQUIRES_NEW`)에서 저장한다. open-in-view가 켜져 있으면 요청의 영속성 컨텍스트가 요청이 끝날 때까지 열려 있어서, 요청의 DB 연결과 `REQUIRES_NEW`의 DB 연결을 함께 잡을 수 있다. 위시 정리(`OrderWishCleanupExecutor`, `REQUIRES_NEW`)도 커밋 뒤 같은 스레드에서 돈다.
+- **확인한 방법**: 코드 읽기
+  - `src/main/resources/application.properties`에 `spring.jpa.open-in-view`가 없어서 기본값(켜짐)이다.
+  - `@TransactionalEventListener(phase = AFTER_COMMIT)`(`src/main/java/gift/order/OrderNotificationRelay.java:23`), `@Transactional(propagation = Propagation.REQUIRES_NEW)`(`src/main/java/gift/order/OrderNotificationDispatcher.java:31`, `src/main/java/gift/wish/OrderWishCleanupExecutor.java:20`)
+- **이유가 코드에 있는지**: 없음. open-in-view를 켜 둔 이유를 설명하는 설정이나 주석이 없다.
+- **상태**: 확인하지 않음. 실제로 연결 두 개를 잡는지, 연결 풀에 영향이 있는지는 요청이나 측정으로 보지 않았다. 관련 ADR 0002, 0003
+
 > 8번, 14번은 요청으로 확인해서 A 섹션으로 옮겼다.
 
 ---

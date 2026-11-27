@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 /**
- * 실패한 주문 알림을 다시 보낸다(ADR 0002).
+ * 주문 알림을 다시 보낸다(ADR 0002). 재시도 대상은 ADR 0006이 정한다.
  * 주기 실행은 OrderNotificationRetryScheduling이 맡는다. 인수 테스트는 retryOnce()를 직접 부른다.
  */
 @Component

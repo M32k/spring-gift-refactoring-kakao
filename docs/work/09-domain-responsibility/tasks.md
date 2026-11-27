@@ -200,7 +200,7 @@ expected: ["옵션 이름은 필수입니다."]
 고친 것(4건):
 - 문제 1 open-questions 9번: 지워진 `wishRepository`의 `OrderController.java:26`, `:34`, `:41`에 "3단계 전 코드"를 붙였다.
 - 확인 4 코드 주석의 docs/work 참조: `OrderService.java:68`, `OrderPlacedEvent.java:3`, `WishRepository.java:13`은 ADR 0003으로, `OrderNotificationRelay.java:11`의 tech-spec 괄호는 지웠다(이미 ADR 0002). `RepositoryWishCleaner.java:7`은 ADR 0003에 unique 이야기가 없어서 `V1__Initialize_project_tables.sql`을 가리키게 했다. 주석만 바꿨다.
-- 확인 5 ADR 0002 "결정"의 재시도 문장: `findRetryTargetIds` 조건(실패한 "보낼 것" + 만든 지 1분이 넘은 시도 0번)과 "결과"에 맞추고 "(B2에서 넣는다)"를 지웠다. ADR 맨 아래에 고친 날짜를 남겼다.
+- 확인 5 ADR 0002 "결정"의 재시도 문장: `findRetryTargetIds` 조건(실패한 "보낼 것" + 만든 지 1분이 넘은 시도 0번)과 "결과"에 맞추고 "(B2에서 넣는다)"를 지웠다. ADR 맨 아래에 고친 날짜를 남겼다. (이후 미션 규칙에 맞춰 0001·0002 본문을 되돌리고 재시도 대상은 ADR 0006으로 분리함)
 - 확인 9 README의 "AGENTS.md:49": 1666b5e 뒤 줄이 밀려서 "AGENTS.md 4단계 작업 규칙의 ADR 줄"로 바꿨다.
 
 그대로 둔 것(6건):

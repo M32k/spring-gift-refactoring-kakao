@@ -79,7 +79,7 @@
 - `docs/user-stories.md`: 사용자 스토리. 누가 무엇을 왜 하는지와 확인한 응답.
 - `docs/open-questions.md`: 확인 필요 목록. 의도인지 버그인지 결정이 필요한 동작.
 - `src/test/resources/features/`: 인수 조건(feature 파일).
-- `docs/adr/`: 결정 기록(ADR). 0001 주문 트랜잭션 경계, 0002 주문 알림 아웃박스, 0003 위시 정리, 0004 주문 금액 계산 자리, 0005 이름 검증 공통 규칙.
+- `docs/adr/`: 결정 기록(ADR). 0001 주문 트랜잭션 경계, 0002 주문 알림 아웃박스, 0003 위시 정리, 0004 주문 금액 계산 자리, 0005 이름 검증 공통 규칙, 0006 주문 알림 재시도 대상.
 - `docs/work/<번호>-<작업>/`: 작업별 계획(`tech-spec.md`, `tasks.md`). 끝난 작업의 계획은 다음 작업에서 읽지 않는다(4단계 작업 규칙).
 - `docs/work/02-acceptance-test/test-strategy.md`: 인수 테스트 전략. 고른 기준, 데이터 초기화, 포인트와 주문 알림 상태를 DB로 확인하는 이유.
 - `.claude/skills/acceptance-test/SKILL.md`: 스토리 하나를 인수 테스트로 옮기는 스킬(`/acceptance-test [스토리 번호]`).
