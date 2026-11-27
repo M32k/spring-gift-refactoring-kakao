@@ -211,7 +211,7 @@
 - 확인한 응답:
   - 관리자 화면: "카카오" 상품명으로 등록 성공
   - 비교: 같은 상품명을 `POST /api/products`로 보내면 400("담당 MD와 협의한 경우에만" 메시지)
-- 비고: 근거는 `ProductNameValidator.java:34` 메시지와 `AdminProductController.java:45`의 `allowKakao = true`. API는 막고 관리자 화면은 허용한다(open-questions 20번)
+- 비고: 근거는 `ProductNameValidator.java:23` 메시지와 `AdminProductController.java:45`의 `allowKakao = true`. API는 막고 관리자 화면은 허용한다(open-questions 20번)
 
 ## 20. 관리자는 담당 MD와 협의한 "카카오" 상품명을 쓰려고, 상품을 수정할 때도 "카카오"가 들어간 상품명을 쓴다
 - API: `GET /admin/products/{id}/edit`, `POST /admin/products/{id}/edit`

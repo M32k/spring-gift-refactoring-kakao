@@ -22,6 +22,7 @@
 ---
 
 ### T1. 주문 금액 특성화 테스트 (테스트와 문서만)
+끝: 41d5384
 
 - `order.feature` 16-20(tech-spec 1-3)
   - 상품 1에 재고 2000인 옵션을 API로 만든다. user1이 그 옵션을 1,279개 주문한다.
@@ -81,6 +82,7 @@ expected: ... "text": "🎁 선물이 도착했어요!\n\n맥북 (스페이스 �
 확인한 뒤 두 파일을 되돌렸고, `./gradlew build`로 모두 통과를 다시 확인했다.
 
 ### R1. 주문 금액을 Product.totalPrice로 (ADR 0004)
+끝: dced891
 
 - `Product.totalPrice(int quantity)`: `price * quantity`를 int 곱셈 그대로 돌려준다.
 - `OrderService.java:61`과 `OrderNotificationMessage.java:10`이 이를 부른다.
@@ -101,6 +103,7 @@ expected: ... "text": "🎁 선물이 도착했어요!\n\n맥북 (스페이스 �
 - `./gradlew build` 성공(2026-11-27): spotlessCheck 통과. 인수 테스트 81개, ArchUnit 3개, KakaoMessageClientTest 3개, OrderNotificationMessageTest 1개 모두 통과.
 
 ### T2. 이름 검증 특성화 테스트 (테스트만)
+끝: 04bddb5
 
 - `src/test/java/gift/product/ProductNameValidatorTest.java`, `src/test/java/gift/option/OptionNameValidatorTest.java`: 결과 목록 전체를 `isEqualTo`로 비교한다(tech-spec 2-4).
 - 바꾸는 파일: 두 테스트 파일(새 파일), 이 파일
@@ -147,6 +150,7 @@ expected: ["옵션 이름은 필수입니다."]
 - 확인한 뒤 src/main 두 파일을 git checkout으로 되돌렸고, `./gradlew build`로 모두 통과를 다시 확인했다.
 
 ### R2. 이름 검증 공통 규칙을 NameRule로 (ADR 0005)
+끝: 57ee333
 
 - `gift.product.NameRule(String target, int maxLength)`과 `List<String> validate(String name)`. 두 Validator가 이를 쓴다.
 - 카카오 검사를 건너뛰는 판단은 `name == null || name.isBlank()` 조건으로 한다.

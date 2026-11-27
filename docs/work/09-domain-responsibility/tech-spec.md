@@ -22,6 +22,8 @@
 
 ### 1-1. 지금 코드와 부르는 곳
 
+R1 전 코드다. 지금은 두 곳 모두 `Product.totalPrice`(`Product.java:61-64`)를 부른다(같은 줄, ADR 0004).
+
 | 곳 | 코드 | 쓰임 |
 |---|---|---|
 | `OrderService.java:61` | `var totalPrice = option.getProduct().getPrice() * request.quantity();` | 바로 다음 줄 `member.deductPoint(totalPrice)`(`:62`)에서 포인트를 뺀다. Order를 만들기 전이다 |
@@ -77,11 +79,13 @@ public int totalPrice(int quantity) {
 
 ### 2-1. 지금 코드와 부르는 곳
 
+R2 전 코드다. 지금 줄 번호는 오른쪽 괄호에 적었다(ADR 0005).
+
 | 곳 | 내용 |
 |---|---|
-| `ProductNameValidator.java:7-39` | 최대 15자. `validate(name)`(`:13-15`)은 `validate(name, false)`와 같다. 카카오 규칙은 `:33-35` |
-| `OptionNameValidator.java:13-37` | 최대 50자 |
-| 허용 패턴 | 두 클래스가 같다(`ProductNameValidator.java:9`, `OptionNameValidator.java:15`) |
+| `ProductNameValidator.java:7-39`(지금 `:5-28`) | 최대 15자. `validate(name)`(`:13-15`, 지금 `:10-12`)은 `validate(name, false)`와 같다. 카카오 규칙은 `:33-35`(지금 `:22-24`) |
+| `OptionNameValidator.java:13-37`(지금 `:10-18`) | 최대 50자 |
+| 허용 패턴 | 두 클래스가 같았다(`ProductNameValidator.java:9`, `OptionNameValidator.java:15`). 지금은 `NameRule.java:15` 한 곳에만 있다 |
 
 부르는 곳:
 - `ProductService.java:64`(`validateName`): `createProduct`(`:30`), `updateProduct`(`:42`)에서 부른다. 메시지를 `", "`로 합쳐 `IllegalArgumentException`으로 던지고, `ProductController`의 `@ExceptionHandler`가 400 본문으로 돌려준다.

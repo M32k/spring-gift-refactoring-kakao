@@ -29,7 +29,7 @@
 - **작동**: 주문 금액은 옵션과 관계없이 `상품 가격 × 주문 수량`으로 계산된다. 옵션에는 가격 필드가 없어서, 옵션이 달라도(예: 맥북 "스페이스 블랙 / M1 Pro"와 "실버 / M1 Max") 같은 금액이 차감된다.
 - **확인한 방법**: user1(포인트 5,000,000)이 맥북 옵션(재고 10)을 1개 주문하자 201이 오고, 재고는 9, 포인트는 1,640,000이 되었다(curl로 주문, 포인트는 `/admin/members`에서 확인). 줄어든 포인트 3,360,000원은 상품 가격과 같다. 옵션별 가격이 없다는 점은 코드로 확인했다.
 - **이유가 코드에 있는지**: 없음. 상품 가격으로 계산하는 이유를 설명하는 주석은 없다.
-  - 금액 계산: `option.getProduct().getPrice() * request.quantity()`(`src/main/java/gift/order/OrderService.java:61`). 주문 알림에 적히는 주문 금액도 같은 방식으로 계산한다(`src/main/java/gift/order/OrderNotificationMessage.java:10`).
+  - 금액 계산: `Product.totalPrice(quantity)`가 `price * quantity`로 계산한다(`src/main/java/gift/product/Product.java:61-64`, ADR 0004). 포인트 차감은 `option.getProduct().totalPrice(request.quantity())`(`src/main/java/gift/order/OrderService.java:61`), 주문 알림에 적히는 주문 금액은 `product.totalPrice(order.getQuantity())`(`src/main/java/gift/order/OrderNotificationMessage.java:10`)로 같은 메서드를 쓴다.
   - `Option` 엔티티(`src/main/java/gift/option/Option.java:16-28`)에는 `id`, `product`, `name`, `quantity`만 있고 가격 필드가 없다.
   - 초기 데이터: 맥북 3,360,000원(`V2__Insert_default_data.sql:9`), 맥북 옵션 2개(`:38-40`), user1 포인트 5,000,000(`:24`).
 - **상태**: 미결정
@@ -73,7 +73,7 @@
 - **작동**: 상품명 검증 오류 메시지는 한국어인데, 다른 곳에는 영어 메시지가 있다.
 - **확인한 방법**: 한국어 메시지는 요청으로, 영어 메시지는 코드로 확인함.
 - **이유가 코드에 있는지**: 없음. 메시지 언어에 대한 규칙이나 주석이 없다.
-  - 한국어: `ProductNameValidator`(`src/main/java/gift/product/ProductNameValidator.java:21,26,30,34`), `Option.subtractStock`(`src/main/java/gift/option/Option.java:40`), `Member.deductPoint`(`Member.java:58,61`)
+  - 한국어: 상품·옵션 이름 검증(`src/main/java/gift/product/NameRule.java:29,34,38`의 공통 메시지, `src/main/java/gift/product/ProductNameValidator.java:23`의 카카오 메시지), `Option.subtractStock`(`src/main/java/gift/option/Option.java:40`), `Member.deductPoint`(`Member.java:58,61`)
   - 영어: `Member.chargePoint`의 `"Amount must be greater than zero."`(`Member.java:50`), `MemberService`의 `"Email is already registered."`, `"Invalid email or password."`(`MemberService.java:18,28,31`), `AdminMemberController`의 `"Member not found. id=..."`(`AdminMemberController.java:52,61,71`)
   - 같은 `Member` 클래스 안에서도 충전 메시지는 영어, 차감 메시지는 한국어다(`Member.java:50` vs `:58`).
 - **상태**: 미결정
@@ -215,8 +215,8 @@
   - API(curl): 400과 함께 "담당 MD와 협의한 경우에만" 메시지가 왔다.
   - 관리자 화면(브라우저): 같은 상품명으로 등록에 성공했다. "카카오" 상품명을 유지한 채 수정해도 302가 왔고, 다시 조회하자 바뀐 값이 나왔다.
 - **이유가 코드에 있는지**: 부분적으로 있다.
-  - 막는 이유는 메시지에 있다: `"\"카카오\"가 포함된 상품명은 담당 MD와 협의한 경우에만 사용할 수 있습니다."`(`src/main/java/gift/product/ProductNameValidator.java:33-35`)
-  - 다르게 처리하는 코드: API는 `validate(name)`(`src/main/java/gift/product/ProductService.java:64`)를 호출하고, 이 메서드는 `allowKakao = false`로 검사한다(`ProductNameValidator.java:13-15`). 관리자 화면은 `validate(name, true)`로 허용한다(`src/main/java/gift/product/AdminProductController.java:45,78`).
+  - 막는 이유는 메시지에 있다: `"\"카카오\"가 포함된 상품명은 담당 MD와 협의한 경우에만 사용할 수 있습니다."`(`src/main/java/gift/product/ProductNameValidator.java:22-24`)
+  - 다르게 처리하는 코드: API는 `validate(name)`(`src/main/java/gift/product/ProductService.java:64`)를 호출하고, 이 메서드는 `allowKakao = false`로 검사한다(`ProductNameValidator.java:10-12`). 관리자 화면은 `validate(name, true)`로 허용한다(`src/main/java/gift/product/AdminProductController.java:45,78`).
   - 관리자 화면이 "MD와 협의한 경우"에 해당한다는 설명은 코드에 없다. 관리자 화면에서 등록하면 협의를 거친 것으로 보는지는 확인이 필요하다.
   - 참고: API의 상품 등록과 수정은 로그인 토큰 없이 된다(1번, 18번). `AdminProductController`에도 인증 확인 코드가 없다. 그래서 "카카오" 상품명 말고는 API와 관리자 화면 사이에 권한 차이가 없을 것으로 보인다. 관리자 상품 화면이 로그인 없이 열리는지는 요청으로 확인하지 않았다.
 - **인수 테스트**: `src/test/resources/features/product-update.feature` 8-3 (API로 수정할 때 "카카오" 상품명을 막는 지금 작동)
@@ -345,11 +345,12 @@
   - 예: 맥북(3,360,000원)을 1,279개 주문하면 4,297,440,000원이어야 하지만 2,472,704원이 된다(4,297,440,000 − 4,294,967,296).
   - 그래서 user1(포인트 5,000,000)의 주문이 201로 성공하고, 포인트는 2,472,704만 줄어 2,527,296이 된다. 주문 알림 문구의 금액도 "2,472,704원"이다.
 - **확인한 방법**: 코드 읽기와 인수 테스트(재고 2000인 옵션을 API로 만들어 1,279개 주문)
-  - 포인트 차감 금액: `option.getProduct().getPrice() * request.quantity()`(`src/main/java/gift/order/OrderService.java:61`)
-  - 알림 문구 금액: `product.getPrice() * order.getQuantity()`(`src/main/java/gift/order/OrderNotificationMessage.java:10`)
+  - 금액 계산: `Product.totalPrice(quantity)`의 `price * quantity`(`src/main/java/gift/product/Product.java:61-64`)
+  - 포인트 차감 금액: `option.getProduct().totalPrice(request.quantity())`(`src/main/java/gift/order/OrderService.java:61`)
+  - 알림 문구 금액: `product.totalPrice(order.getQuantity())`(`src/main/java/gift/order/OrderNotificationMessage.java:10`)
 - **이유가 코드에 있는지**: 없음. 가격(`Product.price`), 주문 수량, 포인트(`Member.point`)가 모두 int이고, 곱셈의 넘침을 확인하는 코드가 없다. 금액이 음수로 넘치면 `deductPoint`의 "차감 금액은 1 이상이어야 합니다." 예외로 500이 된다(`src/main/java/gift/member/Member.java:57-59`).
 - **인수 테스트**: `src/test/resources/features/order.feature` 16-20(201, 포인트 2,527,296, 재고 721), 단위 `src/test/java/gift/order/OrderNotificationMessageTest.java`("2,472,704원")
-- **상태**: 4단계에서는 고치지 않음(구조 변경 작업인 [`docs/work/09-domain-responsibility/tech-spec.md`](work/09-domain-responsibility/tech-spec.md)에서 지금 작동으로 고정함)
+- **상태**: 4단계에서는 고치지 않음(구조 변경 작업인 [`docs/work/09-domain-responsibility/tech-spec.md`](work/09-domain-responsibility/tech-spec.md)에서 지금 작동으로 고정함). ADR 0004로 알면서 유지
 
 > 8번, 14번은 요청으로 확인해서 A 섹션으로 옮겼다.
 
