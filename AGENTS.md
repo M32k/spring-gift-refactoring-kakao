@@ -16,12 +16,12 @@
 
 | 코드 | 실제 뜻 | 위치 |
 |---|---|---|
-| `quantity` | `Option.quantity`는 **재고**이고, `OrderRequest.quantity`와 `Order.quantity`는 **주문 수량**이다. `subtractStock`은 재고에서 주문 수량을 뺀다. | `option/Option.java:28`, `order/OrderRequest.java:6`, `order/Order.java:25`, `order/OrderService.java:53` |
+| `quantity` | `Option.quantity`는 **재고**이고, `OrderRequest.quantity`와 `Order.quantity`는 **주문 수량**이다. `subtractStock`은 재고에서 주문 수량을 뺀다. | `option/Option.java:28`, `order/OrderRequest.java:6`, `order/Order.java:25`, `order/OrderService.java:57` |
 | `token`, `accessToken` | `TokenResponse.token`은 **로그인 토큰**이다(응답 JSON 키). `KakaoLoginClient.KakaoTokenResponse.accessToken`은 **카카오 액세스 토큰**이다(카카오 응답). | `auth/TokenResponse.java:9`, `auth/KakaoLoginClient.java:47` |
-| `message` | `Order.message`와 `OrderRequest.message`는 **주문 메시지**다. `KakaoMessageClient`(클래스 이름)는 **주문 알림**을 보낸다. `e.getMessage()`는 오류 메시지다. | `order/Order.java:26`, `order/OrderRequest.java:6`, `order/KakaoMessageClient.java:9` |
+| `message` | `Order.message`와 `OrderRequest.message`는 **주문 메시지**다. `KakaoMessageClient`(클래스 이름)는 **주문 알림**을 보낸다. `e.getMessage()`는 오류 메시지다. | `order/Order.java:26`, `order/OrderRequest.java:6`, `order/KakaoMessageClient.java:8` |
 | `admin`, `Admin*Controller` | 이름만 관리자용이다. `/admin/**`에는 권한 확인이 없다. 초기 데이터의 `admin@example.com`도 일반 회원이다. | `member/AdminMemberController.java`, `product/AdminProductController.java` |
 | 회원 id와 `user` 번호 | 초기 데이터의 `user1@example.com`은 회원 id 2이고, `user2@example.com`은 회원 id 3이다. id 1은 admin이다. | `db/migration/V2__Insert_default_data.sql` |
-| `// order flow:` 주석 | `OrderService`의 흐름 주석 "1. auth check …"는 컨트롤러에서 그대로 옮겨 온 것이라, 1단계 인증 확인은 `OrderController`에 있다. 주석 자체는 고치지 않는다. | `order/OrderService.java:35-42`, `order/OrderController.java:40-44` |
+| `// order flow:` 주석 | `OrderService`의 흐름 주석 "1. auth check …"는 컨트롤러에서 그대로 옮겨 온 것이라, 1단계 인증 확인은 `OrderController`에 있다. "7. send kakao notification"도 이제 알림을 같은 트랜잭션에 저장하는 것까지이고, 실제 발송은 커밋 뒤 `OrderNotificationRelay`가 한다(ADR 0002). 주석 자체는 고치지 않는다. | `order/OrderService.java:39-46`, `order/OrderController.java:40-44` |
 
 ## 3단계 작업 규칙 (구조 변경)
 
@@ -53,7 +53,7 @@
 
 - 현재 동작은 버그처럼 보여도 그대로 둔다. 이상한 동작은 `docs/open-questions.md`에 기록만 하고, 고칠지는 사람이 정한다.
 - `docs/open-questions.md`의 항목 번호는 다시 매기지 않는다. 다른 문서가 번호로 항목을 가리킨다.
-- 인수 테스트는 HTTP 요청과 응답으로만 검증한다. 상태 코드, 응답 본문, 바뀐 상태(다음 요청으로 확인)까지 본다. 포인트만 예외로 DB에서 확인한다. 이유는 `docs/work/02-acceptance-test/test-strategy.md`에 있다.
+- 인수 테스트는 HTTP 요청과 응답으로만 검증한다. 상태 코드, 응답 본문, 바뀐 상태(다음 요청으로 확인)까지 본다. 포인트와 주문 알림 상태만 예외로 DB에서 확인한다(둘 다 조회 API가 없다). 이유는 `docs/work/02-acceptance-test/test-strategy.md`에 있다.
 - 카카오 키는 `KAKAO_CLIENT_ID`, `KAKAO_CLIENT_SECRET` 환경 변수로 넣는다. 저장소에 키를 넣지 않는다.
 - PR은 Fork의 `M32k` 브랜치에서 원본 미션 저장소로 보낸다.
 
@@ -73,7 +73,7 @@
 - `docs/user-stories.md`: 사용자 스토리. 누가 무엇을 왜 하는지와 확인한 응답.
 - `docs/open-questions.md`: 확인 필요 목록. 의도인지 버그인지 결정이 필요한 동작.
 - `src/test/resources/features/`: 인수 조건(feature 파일).
-- `docs/work/02-acceptance-test/test-strategy.md`: 인수 테스트 전략. 고른 기준, 데이터 초기화, 포인트만 DB로 확인하는 이유.
+- `docs/work/02-acceptance-test/test-strategy.md`: 인수 테스트 전략. 고른 기준, 데이터 초기화, 포인트와 주문 알림 상태를 DB로 확인하는 이유.
 - `.claude/skills/acceptance-test/SKILL.md`: 스토리 하나를 인수 테스트로 옮기는 스킬(`/acceptance-test [스토리 번호]`).
 
 ## 규칙

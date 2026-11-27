@@ -84,7 +84,7 @@
 - 7-1과 7-2는 둘 다 상품 수 6에서 시작한다고 확인한다.
 - 이 두 쌍이 한 번의 실행에서 모두 통과하면 초기화가 동작한다는 뜻이다.
 
-## 5. 검증 방법: 포인트만 DB, 나머지는 API
+## 5. 검증 방법: 포인트와 주문 알림 상태는 DB, 나머지는 API
 
 | 값 | 확인 방법 |
 |---|---|
@@ -93,9 +93,11 @@
 | 위시 | `GET /api/wishes` (회원의 로그인 토큰) |
 | 주문 내역 | `GET /api/orders`의 `totalElements` (회원의 로그인 토큰) |
 | **포인트** | **DB**: `select point from member where email = ?` |
+| **주문 알림 상태** | **DB**: `select status, attempt_count, last_error, sent_at from order_notification where order_id = ?` (07에서 더함, ADR 0002) |
 
-**포인트만 DB에서 확인하는 이유**
+**포인트와 주문 알림 상태를 DB에서 확인하는 이유**
 - 회원이 자기 포인트를 조회하는 API가 없다(open-questions 4번).
+- 주문 알림의 상태(보낼 것, 보냄, 실패)와 시도 횟수를 보는 API도 없다(ADR 0002).
 - 미션 규칙상 API로 확인할 수 없는 값은 DB에서 확인해도 된다.
 
 **관리자 화면으로 포인트를 확인하지 않는 이유**
@@ -105,11 +107,13 @@
 
 **비용**
 - 포인트 확인은 테이블과 컬럼 이름(`member.point`)에 묶인다.
-- DB를 읽는 곳은 `MemberSteps`의 포인트 확인 단계 한 곳뿐이다. 포인트 저장 방식이 바뀌거나 회원 포인트 API가 생기면 그 한 곳만 고치면 된다.
+- 주문 알림 확인은 `order_notification` 테이블과 열 이름에 묶인다.
+- DB를 읽는 곳은 `MemberSteps`의 포인트 확인 단계와 `OrderNotificationSteps`의 주문 알림 단계다. 저장 방식이 바뀌거나 조회 API가 생기면 그 단계만 고치면 된다.
 
 ## 6. 주문 알림: 외부 호출이 없다 (코드로만 판단)
 
-- 주문 알림은 회원에게 카카오 액세스 토큰이 있을 때만 보낸다(`OrderService.java:69-78`). 없으면 카카오로 요청을 보내지 않는다.
+- 주문 알림은 회원에게 카카오 액세스 토큰이 있을 때만 만든다(`OrderService.java:73-81`). 없으면 카카오로 요청을 보내지 않는다.
+- 07부터 16-8~16-14는 토큰을 DB로 넣어 알림 경로를 지난다. 이때 알림은 가짜 발송기(`FakeOrderNotificationSender`)가 받아서 카카오로 나가지 않는다.
 - 초기 데이터의 회원은 카카오 액세스 토큰이 비어 있다. V2의 회원 insert에 이 값이 없다.
 - 카카오 액세스 토큰은 카카오 로그인 콜백(`KakaoAuthController.java:54`에서 부르는 `MemberService.java:39-40`)에서만 저장된다. 테스트는 이메일 로그인(`POST /api/members/login`)만 쓴다.
 - 따라서 이번 시나리오에서는 카카오로 나가는 호출이 없다.

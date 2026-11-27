@@ -29,7 +29,7 @@
 - **작동**: 주문 금액은 옵션과 관계없이 `상품 가격 × 주문 수량`으로 계산된다. 옵션에는 가격 필드가 없어서, 옵션이 달라도(예: 맥북 "스페이스 블랙 / M1 Pro"와 "실버 / M1 Max") 같은 금액이 차감된다.
 - **확인한 방법**: user1(포인트 5,000,000)이 맥북 옵션(재고 10)을 1개 주문하자 201이 오고, 재고는 9, 포인트는 1,640,000이 되었다(curl로 주문, 포인트는 `/admin/members`에서 확인). 줄어든 포인트 3,360,000원은 상품 가격과 같다. 옵션별 가격이 없다는 점은 코드로 확인했다.
 - **이유가 코드에 있는지**: 없음. 상품 가격으로 계산하는 이유를 설명하는 주석은 없다.
-  - 금액 계산: `option.getProduct().getPrice() * request.quantity()`(`src/main/java/gift/order/OrderService.java:57`). 주문 알림에 적히는 주문 금액도 같은 방식으로 계산한다(`src/main/java/gift/order/KakaoMessageClient.java:33`).
+  - 금액 계산: `option.getProduct().getPrice() * request.quantity()`(`src/main/java/gift/order/OrderService.java:61`). 주문 알림에 적히는 주문 금액도 같은 방식으로 계산한다(`src/main/java/gift/order/OrderNotificationMessage.java:10`).
   - `Option` 엔티티(`src/main/java/gift/option/Option.java:16-28`)에는 `id`, `product`, `name`, `quantity`만 있고 가격 필드가 없다.
   - 초기 데이터: 맥북 3,360,000원(`V2__Insert_default_data.sql:9`), 맥북 옵션 2개(`:38-40`), user1 포인트 5,000,000(`:24`).
 - **상태**: 미결정
@@ -40,8 +40,8 @@
 - **확인한 방법**: curl로 같은 주문을 두 번째로 보낸 뒤 재고를 확인함.
   - 초기 데이터의 user2(포인트 3,000,000)로 한 번에 주문해도 같은 작동
 - **이유가 코드에 있는지**: 없음. 작동을 만드는 코드는 다음과 같다.
-  - 재고를 줄이고 바로 저장한다: `option.subtractStock(...)` 다음에 `optionRepository.save(option)`(`OrderService.java:53-54`).
-  - 그다음 포인트를 줄일 때 예외가 난다: `member.deductPoint(totalPrice)`(`OrderService.java:58`)에서 `throw new IllegalArgumentException("포인트가 부족합니다.")`(`src/main/java/gift/member/Member.java:60-62`).
+  - 재고를 줄이고 바로 저장한다: `option.subtractStock(...)` 다음에 `optionRepository.save(option)`(`OrderService.java:57-58`).
+  - 그다음 포인트를 줄일 때 예외가 난다: `member.deductPoint(totalPrice)`(`OrderService.java:62`)에서 `throw new IllegalArgumentException("포인트가 부족합니다.")`(`src/main/java/gift/member/Member.java:60-62`).
   - `createOrder`와 `OrderController`에 `@Transactional`이 없다. 프로젝트 전체에도 `@Transactional`이 없어서, 앞에서 저장한 재고 변경이 되돌려지지 않는다. (4단계 전. 지금은 ADR 0001로 createOrder에 있다)
   - 500인 이유: `OrderController`에는 `@ExceptionHandler`가 없고, 프로젝트에 `@ControllerAdvice`도 없다. 그래서 `IllegalArgumentException`이 400으로 바뀌지 않는다. `ProductController`와 `MemberController`에는 컨트롤러별 400 처리기가 있다.
 - **인수 테스트**: `src/test/resources/features/order.feature` 16-2 (500, 재고·포인트·주문 내역 그대로)
@@ -95,7 +95,7 @@
 - **작동**: 주석에는 `6. cleanup wish`가 있지만 `createOrder` 본문에는 위시를 정리하는 코드가 없다. 주문 저장 후 바로 주문 알림으로 넘어간다.
 - **확인한 방법**: 직접 curl로 확인함: 맥북을 주문한 user1의 위시에 맥북이 그대로 남아 있음
 - **이유가 코드에 있는지**: 의도(주석)만 있고, 왜 빠졌는지에 대한 설명은 없다.
-  - 주석 `// 6. cleanup wish`(`OrderService.java:41`)
+  - 주석 `// 6. cleanup wish`(`OrderService.java:45`)
   - 본문의 `// save order`(`:58`) 다음이 바로 `// best-effort kakao notification`(`:61`)이다.
   - `WishRepository`(`src/main/java/gift/wish/WishRepository.java`)에는 조회 메서드만 있고, 회원과 상품으로 삭제하는 전용 메서드는 없다.
 - **상태**: 미결정 (주석이 맞는지, 구현이 맞는지 결정 필요)
@@ -120,7 +120,7 @@
 - **확인한 방법**: user2의 로그인 토큰으로 일반 감귤 옵션(재고 50)을 51개 주문하자 500이 왔다. 그 뒤 재고는 50, user2 포인트는 3,000,000 그대로였다. 이때 주문 금액은 25,000 × 51 = 1,275,000원이라 포인트는 충분했다. 따라서 실패 원인은 재고 부족이다(`V2__Insert_default_data.sql:17,26,49-50`).
 - **이유가 코드에 있는지**: 없음. 작동을 만드는 코드는 다음과 같다.
   - 500인 이유: `Option.subtractStock`이 `IllegalArgumentException("차감할 수량이 현재 재고보다 많습니다.")`를 던진다(`src/main/java/gift/option/Option.java:39-41`). 3번과 마찬가지로 `OrderController`에는 이 예외를 400으로 바꾸는 처리기가 없다.
-  - 상태가 남지 않는 이유: `subtractStock`은 재고를 줄이기 전에 수량을 확인하고 예외를 던진다(`Option.java:39-42`). 그래서 그 뒤의 `optionRepository.save(option)`(`OrderService.java:54`)와 포인트 차감(`:58`)까지 가지 않는다. 3번은 재고를 저장한 뒤에 실패하고, 이 경우는 저장하기 전에 실패한다.
+  - 상태가 남지 않는 이유: `subtractStock`은 재고를 줄이기 전에 수량을 확인하고 예외를 던진다(`Option.java:39-42`). 그래서 그 뒤의 `optionRepository.save(option)`(`OrderService.java:58`)와 포인트 차감(`:62`)까지 가지 않는다. 3번은 재고를 저장한 뒤에 실패하고, 이 경우는 저장하기 전에 실패한다.
 - **인수 테스트**: `src/test/resources/features/order.feature` 16-3 (500, 재고와 포인트 그대로)
 - **상태**: 미결정
 
@@ -142,9 +142,9 @@
 - **작동**: 주문하면 카카오톡으로 주문 알림이 "🎁 선물이 도착했어요!"라는 문구로 나간다. 그런데 받는 사람은 선물을 받을 사람이 아니라 주문한 회원 본인이다.
 - **확인한 방법**: 직접 확인함. 카카오 로그인으로 가입한 회원으로 주문했더니, 주문한 본인의 카카오톡에 "선물이 도착했어요" 메시지가 왔다.
 - **이유가 코드에 있는지**: 없음. 선물 문구를 본인에게 보내는 이유를 설명하는 주석은 없다.
-  - 메시지 문구는 받는 사람 입장의 선물 알림이다. `"🎁 선물이 도착했어요!"`(`src/main/java/gift/order/KakaoMessageClient.java:39`), 버튼 `"선물 확인하기"`(`:41`).
-  - 보내는 곳은 "나에게 보내기" API다. 메서드 이름이 `sendToMe`(`KakaoMessageClient.java:16`)이고, 주소가 `/v2/api/talk/memo/default/send`(`:24`)이다. 주문한 회원의 카카오 액세스 토큰으로 보낸다(`OrderService.java:75`).
-  - 주문할 때 받는 사람 정보를 넘기지 않는다. `new Order(option, member.getId(), quantity, message)`(`OrderService.java:62`)
+  - 메시지 문구는 받는 사람 입장의 선물 알림이다. `"🎁 선물이 도착했어요!"`(`src/main/java/gift/order/OrderNotificationMessage.java:16`), 버튼 `"선물 확인하기"`(`:18`).
+  - 보내는 곳은 "나에게 보내기" API다. 4단계 전 메서드 이름이 `sendToMe`였고, 지금은 `send` 위 주석에 남아 있다(`KakaoMessageClient.java:15`). 주소는 `/v2/api/talk/memo/default/send`(`:23`)이다. 주문한 회원의 카카오 액세스 토큰으로 보낸다(`OrderNotificationDispatcher.java:35-37`).
+  - 주문할 때 받는 사람 정보를 넘기지 않는다. `new Order(option, member.getId(), quantity, message)`(`OrderService.java:66`)
   - 참고로 초기 주문 데이터의 메시지는 받는 사람에게 쓰는 말이다. 예: `'생일 축하해! 🎉'`, `'엄마 감사합니다 ❤️'`(`V2__Insert_default_data.sql:55,59`)
 - **상태**: 미결정 (본인 알림이 의도인지, 받는 사람에게 보내는 기능이 빠진 것인지 결정 필요)
 
@@ -321,12 +321,13 @@
 ### 10. 주문 알림 발송이 실패해도 주문은 성공한다
 
 - **작동**: 주문 알림 발송에서 나는 모든 예외를 잡고 무시한다. 로그도 남기지 않는다. 주문은 201로 성공한다. 회원에게 카카오 액세스 토큰이 없으면 발송을 시도하지 않는다.
-- **확인한 방법**: 코드 읽기 (`OrderService.java:64-78`)
-- **이유가 코드에 있는지**: 부분적으로 있다.
-  - 주석 `// best-effort kakao notification`(`OrderService.java:64`)과 메서드 이름 `sendOrderNotificationIfPossible`(`:69`)에서 실패해도 괜찮다는 의도가 보인다.
-  - 하지만 `catch (Exception ignored) {}`(`:76-77`)는 로그도 남기지 않는다. 실패를 기록하지 않는 이유는 코드에 없다.
-  - 발송은 `KakaoMessageClient.sendToMe`(`src/main/java/gift/order/KakaoMessageClient.java:16-30`)에서 하고, 재시도는 없다.
-- **상태**: 미결정 (실패 무시는 정책으로 보이지만, 로그를 남길지는 결정 필요)
+- **확인한 방법**: 코드 읽기 (4단계 전 `OrderService`의 `sendOrderNotificationIfPossible`. ADR 0002로 없어졌다)
+- **이유가 코드에 있는지**: 부분적으로 있다. (아래는 4단계 전 코드)
+  - 주석 `// best-effort kakao notification`과 메서드 이름 `sendOrderNotificationIfPossible`에서 실패해도 괜찮다는 의도가 보인다.
+  - 하지만 `catch (Exception ignored) {}`는 로그도 남기지 않는다. 실패를 기록하지 않는 이유는 코드에 없다.
+  - 발송은 `KakaoMessageClient.sendToMe`에서 하고, 재시도는 없다.
+- **인수 테스트**: `src/test/resources/features/order-notification.feature` 16-9(실패해도 201, 시도 횟수와 마지막 오류를 남기고 재시도), 16-12(다섯 번 실패하면 "실패")
+- **상태**: 4단계에서 고침, ADR 0002
 
 ### 23. JWT_SECRET 환경 변수가 없으면 저장소에 있는 예시 비밀 키로 로그인 토큰을 만든다
 

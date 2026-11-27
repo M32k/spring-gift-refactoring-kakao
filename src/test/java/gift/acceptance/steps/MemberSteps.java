@@ -25,7 +25,7 @@ public class MemberSteps {
     }
 
     /**
-     * 인수 테스트에서 DB를 읽는 유일한 곳이다.
+     * 인수 테스트에서 DB를 읽는 곳은 여기(포인트)와 OrderNotificationSteps(주문 알림 상태)다.
      * 회원이 자기 포인트를 조회하는 API가 없어서(open-questions 4번) 포인트만 DB에서 확인한다.
      * 관리자 화면을 쓰지 않는 이유는 docs/work/02-acceptance-test/test-strategy.md에 있다.
      */

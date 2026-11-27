@@ -20,6 +20,7 @@
 ---
 
 ### C0. 카카오 발송 요청을 지금 그대로 고정한다 (테스트만)
+끝: 1f6e5e2
 
 - 이유: 초기 데이터 회원에게는 카카오 액세스 토큰이 없어서 인수 테스트가 알림 코드를 지나지 않는다. R1, R2를 안전망 없이 하지 않으려고 먼저 만든다.
 - `src/test/java/gift/order/KakaoMessageClientTest.java`(새 파일)
@@ -38,6 +39,7 @@
 - 커밋 메시지 예: `test: 카카오 주문 알림 요청을 고정하는 테스트 추가`
 
 ### R1. 알림 문구 만들기를 KakaoMessageClient 밖으로
+끝: 306c8c8
 
 - `buildTemplate`(`KakaoMessageClient.java:32-45`)을 새 클래스 `gift.order.OrderNotificationMessage`로 옮긴다. 문구는 한 글자도 바꾸지 않는다.
 - `sendToMe`는 다 만든 문구(`String`)를 받는다. 문구는 `OrderService`가 만들어 넘긴다.
@@ -47,6 +49,7 @@
 - 커밋 메시지 예: `refactor: 주문 알림 문구 만들기를 KakaoMessageClient 밖으로 옮김`
 
 ### R2. 발송을 인터페이스 뒤로
+끝: 7514f3d
 
 - `gift.order.OrderNotificationSender` 인터페이스(`send(String kakaoAccessToken, String message)`)를 만든다. `KakaoMessageClient`가 이 인터페이스를 구현한다.
 - `OrderService`는 `KakaoMessageClient`가 아니라 `OrderNotificationSender`에 의존한다.
@@ -55,6 +58,7 @@
 - 커밋 메시지 예: `refactor: 주문 알림 발송을 OrderNotificationSender 뒤로 옮김`
 
 ### R3. 아웃박스 테이블 만들기 (Flyway V3)
+끝: 251ef38
 
 - `src/main/resources/db/migration/V3__Create_order_notification.sql`. 내용은 tech-spec 5장 그대로다. 아직 쓰는 코드는 없다.
 - 바꾸는 파일: `V3__Create_order_notification.sql`(새 파일)
@@ -62,6 +66,7 @@
 - 커밋 메시지 예: `refactor: 주문 알림 아웃박스 테이블 추가 (Flyway V3)`
 
 ### T1. 가짜 발송기와 단계 정의 (테스트만)
+끝: 735ae53
 
 - `src/test/java/gift/acceptance/FakeOrderNotificationSender.java`: `@Primary`로 넣는다.
   - 받은 (토큰, 문구)를 기록한다.
@@ -78,6 +83,7 @@
 - 커밋 메시지 예: `test: 가짜 주문 알림 발송기와 단계 정의 추가`
 
 ### B1. 아웃박스 저장과 커밋 직후 발송
+끝: ed2ca0b
 
 - 테스트 먼저: `src/test/resources/features/order-notification.feature`(새 파일)
   - 16-8: 토큰 있는 회원이 주문하면 알림이 SENT가 된다. 받은 문구와 토큰도 본다(tech-spec O-1).
@@ -123,6 +129,8 @@ expected: 1
 해석: 16-8, 16-9만 "응답의 주문 알림은 1건이다"에서 실패했다. 지금 코드에는 아웃박스가 없어서 알림이 0건이다. 16-10, 16-11(알림이 생기지 않아야 하는 경우)은 처음부터 통과했다.
 
 ### B2. 주기 재시도와 5번 제한
+끝: a470f24
+포맷 수정: c24903a style: OrderNotificationRetryJob 포맷 맞춤 (B2 커밋 전에 spotlessCheck를 빠뜨림)
 
 - 테스트 먼저(`order-notification.feature`)
   - 16-9에 재시도 부분을 더한다: 재시도가 한 번 돌면 SENT가 된다.
@@ -167,6 +175,7 @@ CucumberTest > Cucumber > 16. 회원이 주문하면 카카오 주문 알림을 
 해석: 16-9, 16-12만 재시도 뒤 상태 단계에서 실패했다. 앞 단계(첫 발송 실패 → "보낼 것", 시도 1)는 통과했다. 빈 재시도가 아무것도 하지 않아 알림이 "보낼 것"으로 남았다. 나머지 71개는 통과.
 
 ### B3. 시도 0번 알림의 재시도 분기 테스트 (테스트만)
+끝: e172a04
 
 - **코드 뒤에 더한 테스트다.** B2의 재시도 대상 가운데 "시도 0번이고 만든 지 1분이 넘은 행" 분기를 지나는 시나리오가 없었다. 코드보다 늦게 썼으므로, 기대값을 일부러 틀려 실패하는지 확인한다.
 - `order-notification.feature`
@@ -178,6 +187,22 @@ CucumberTest > Cucumber > 16. 회원이 주문하면 카카오 주문 알림을 
 - 바꾸는 파일: `order-notification.feature`, `OrderNotificationSteps.java`, 이 파일
 - 확인 명령: 인수 테스트
 - 커밋 메시지 예: `test: 시도 0번 주문 알림의 재시도 분기 시나리오 추가`
+
+#### B3 일부러 틀린 결과
+
+- 날짜: 2026-11-27
+- 16-14의 "만든 시각 0분 전"을 "2분 전"으로 바꾸자 16-14만 실패했다.
+
+```
+[주문 알림 상태] expected: "PENDING" but was: "SENT"
+    at OrderNotificationSteps.java:109
+    at order-notification.feature:97
+
+75 tests completed, 1 failed
+```
+
+- 되돌린 뒤 모두 통과했다.
+- 해석: 16-14가 "1분 안 된 시도 0번 알림은 재시도가 건드리지 않는다"를 실제로 확인한다.
 
 ### D. 문서 정리
 
