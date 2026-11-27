@@ -21,7 +21,7 @@
 | `message` | `Order.message`와 `OrderRequest.message`는 **주문 메시지**다. `KakaoMessageClient`(클래스 이름)는 **주문 알림**을 보낸다. `e.getMessage()`는 오류 메시지다. | `order/Order.java:26`, `order/OrderRequest.java:6`, `order/KakaoMessageClient.java:8` |
 | `admin`, `Admin*Controller` | 이름만 관리자용이다. `/admin/**`에는 권한 확인이 없다. 초기 데이터의 `admin@example.com`도 일반 회원이다. | `member/AdminMemberController.java`, `product/AdminProductController.java` |
 | 회원 id와 `user` 번호 | 초기 데이터의 `user1@example.com`은 회원 id 2이고, `user2@example.com`은 회원 id 3이다. id 1은 admin이다. | `db/migration/V2__Insert_default_data.sql` |
-| `// order flow:` 주석 | `OrderService`의 흐름 주석 "1. auth check …"는 컨트롤러에서 그대로 옮겨 온 것이라, 1단계 인증 확인은 `OrderController`에 있다. "7. send kakao notification"도 이제 알림을 같은 트랜잭션에 저장하는 것까지이고, 실제 발송은 커밋 뒤 `OrderNotificationRelay`가 한다(ADR 0002). 주석 자체는 고치지 않는다. | `order/OrderService.java:39-46`, `order/OrderController.java:40-44` |
+| `// order flow:` 주석 | `OrderService`의 흐름 주석 "1. auth check …"는 컨트롤러에서 그대로 옮겨 온 것이라, 1단계 인증 확인은 `OrderController`에 있다. "7. send kakao notification"도 이제 알림을 같은 트랜잭션에 저장하는 것까지이고, 실제 발송은 커밋 뒤 `OrderNotificationRelay`가 한다(ADR 0002). "6. cleanup wish"는 이제 주문 커밋 뒤 `gift.wish`의 `OrderWishCleanupListener`가 한다(ADR 0003). 주석 자체는 고치지 않는다. | `order/OrderService.java:39-46`, `order/OrderController.java:40-44` |
 
 ## 3단계 작업 규칙 (구조 변경)
 

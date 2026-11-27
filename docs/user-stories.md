@@ -184,12 +184,13 @@
   - 포인트 3,000,000인 user2가 맥북 1개 주문: 500, 재고는 10에서 9로 줄어듦 (초기 데이터에서 직접 확인) (4단계 전, ADR 0001로 바뀜)
   - 4단계 뒤 같은 요청: 500, 재고 10 그대로 (초기 데이터에서 직접 확인, ADR 0001)
   - 재고 부족: 500, 상태 그대로(open-questions 12번)
-- 비고: "선물이 도착했어요" 주문 알림을 주문한 본인에게 보낸다(open-questions 14번). 주문 금액은 옵션이 아니라 상품 가격으로 계산한다(open-questions 2번). 주문 알림은 아웃박스에 저장해 커밋 뒤 보내고, 실패하면 5번까지 다시 보낸다(ADR 0002).
+- 비고: "선물이 도착했어요" 주문 알림을 주문한 본인에게 보낸다(open-questions 14번). 주문 금액은 옵션이 아니라 상품 가격으로 계산한다(open-questions 2번). 주문 알림은 아웃박스에 저장해 커밋 뒤 보내고, 실패하면 5번까지 다시 보낸다(ADR 0002). 주문이 커밋되면 주문한 상품을 그 회원의 위시에서 뺀다. 위시 정리가 실패해도 주문은 201이고 위시는 남는다(ADR 0003).
 
 ### 인수 조건
 
 인수 조건: `src/test/resources/features/order.feature` (16-1~16-7)
 인수 조건: `src/test/resources/features/order-notification.feature` (16-8~16-14)
+인수 조건: `src/test/resources/features/wish-cleanup.feature` (16-15~16-19)
 
 ## 17. 회원은 자기 주문 내역을 본다 (왜: 확인 필요)
 - API: `GET /api/orders`

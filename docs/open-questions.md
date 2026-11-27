@@ -96,9 +96,10 @@
 - **확인한 방법**: 직접 curl로 확인함: 맥북을 주문한 user1의 위시에 맥북이 그대로 남아 있음
 - **이유가 코드에 있는지**: 의도(주석)만 있고, 왜 빠졌는지에 대한 설명은 없다.
   - 주석 `// 6. cleanup wish`(`OrderService.java:45`)
-  - 본문의 `// save order`(`:58`) 다음이 바로 `// best-effort kakao notification`(`:61`)이다.
-  - `WishRepository`(`src/main/java/gift/wish/WishRepository.java`)에는 조회 메서드만 있고, 회원과 상품으로 삭제하는 전용 메서드는 없다.
-- **상태**: 미결정 (주석이 맞는지, 구현이 맞는지 결정 필요)
+  - 본문의 `// save order` 다음이 바로 `// best-effort kakao notification`이었다(4단계 전 코드). 지금은 `// save order`(`:65`) 다음에 `OrderPlacedEvent` 발행(`:68-70`)이 있다.
+  - `WishRepository`(`src/main/java/gift/wish/WishRepository.java`)에는 조회 메서드만 있고, 회원과 상품으로 삭제하는 전용 메서드는 없었다(4단계 전 코드). 지금은 `deleteByMemberIdAndProductId`가 있다.
+- **인수 테스트**: `src/test/resources/features/wish-cleanup.feature` 16-15~16-19
+- **상태**: 4단계에서 고침, ADR 0003
 
 ### 11. 상품 삭제가 로그인 토큰 없이 성공한다
 
@@ -316,7 +317,7 @@
 - **작동**: `wishRepository` 필드를 선언하고 생성자에서 주입받지만, 어떤 메서드에서도 쓰지 않는다.
 - **확인한 방법**: 코드 읽기. 파일 안에서 `wishRepository`는 선언(`OrderController.java:26`), 생성자 매개변수(`:34`), 대입(`:41`)에만 나온다.
 - **이유가 코드에 있는지**: 직접적인 설명은 없다. 8번의 "위시 정리" 단계에 쓰려고 넣은 것으로 보이지만, 이것은 추정이다.
-- **상태**: 3단계에서 지움, 근거는 05-service-layer/tasks.md 작동 변경 후보
+- **상태**: 3단계에서 지움, 근거는 05-service-layer/tasks.md 작동 변경 후보. 위시 정리는 08에서 OrderController가 아닌 gift.wish 리스너로 구현함(ADR 0003)
 
 ### 10. 주문 알림 발송이 실패해도 주문은 성공한다
 

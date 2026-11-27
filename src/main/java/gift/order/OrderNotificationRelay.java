@@ -26,7 +26,9 @@ public class OrderNotificationRelay {
             orderNotificationDispatcher.dispatch(event.notificationId());
         } catch (Exception e) {
             // 발송 실패는 dispatch가 기록한다. 여기까지 온 것은 결과를 저장하지 못한 경우라,
-            // 알림은 시도 0번의 "보낼 것"으로 남고 재시도가 다시 보낸다. 주문 응답(201)에는 새어 나가지 않게 한다.
+            // 알림은 시도 0번의 "보낼 것"으로 남고 재시도가 다시 보낸다.
+            // 커밋 뒤 실패를 여기서 잡아 warn 로그로 남긴다(밖으로 나가도 Spring이 삼켜 응답은 201이지만,
+            // 우리 로그를 남기려고 잡는다. ADR 0003).
             log.warn("주문 알림 결과 저장 실패: notificationId={}", event.notificationId(), e);
         }
     }

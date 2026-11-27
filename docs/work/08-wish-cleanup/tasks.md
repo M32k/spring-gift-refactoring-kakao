@@ -21,6 +21,7 @@
 ---
 
 ### R1. 위시 정리 인터페이스와 구현 (부르는 곳 없음)
+끝: ac0f694
 
 - `gift.wish.WishCleaner` 인터페이스: `void clean(Long memberId, Long productId)`
 - `gift.wish.RepositoryWishCleaner`(`@Component`): `WishRepository`로 그 회원 + 상품의 위시를 모두 지운다. 하나만 찾거나 `Optional`로 받는 방식은 쓰지 않는다(tech-spec 2장).
@@ -41,6 +42,7 @@
 - `./gradlew build` 성공(2026-11-27): spotlessCheck 통과. 인수 테스트 75개, ArchUnit 3개, KakaoMessageClientTest 3개 모두 통과.
 
 ### R2. 주문마다 OrderPlacedEvent 발행 (받는 곳 없음)
+끝: e4e420b
 
 - `gift.order.OrderPlacedEvent(orderId, memberId, productId)`를 만든다.
 - `createOrder`가 주문 저장 뒤 이 이벤트를 발행한다. 받는 리스너가 아직 없어서 작동은 같다.
@@ -59,6 +61,7 @@
 - `./gradlew build` 성공(2026-11-27): spotlessCheck 통과. 인수 테스트 75개, ArchUnit 3개, KakaoMessageClientTest 3개 모두 통과.
 
 ### T1. 위시 정리 감싸개와 단계 정의 (테스트만)
+끝: 66814a7
 
 - `src/test/java/gift/acceptance/FailableWishCleaner.java`(`@Component @Primary`): 평소에는 진짜 `RepositoryWishCleaner`에 맡기고, 정해 두면 예외를 던진다. 시나리오마다 초기화한다.
 - 단계 정의: "위시 정리가 실패한다". 위시 확인은 기존 `WishSteps`의 `위시 번호는 …다`를 쓴다.
@@ -82,6 +85,7 @@
 - `./gradlew build` 성공(2026-11-27): spotlessCheck 통과. 인수 테스트 75개, ArchUnit 3개, KakaoMessageClientTest 3개 모두 통과.
 
 ### B1. 주문 커밋 뒤 위시 정리
+끝: 27b1b7e
 
 - 테스트 먼저: `src/test/resources/features/wish-cleanup.feature`(새 파일). 16-15~16-19 = tech-spec 7장 W-1~W-5.
 - 코드를 바꾸기 전에 W-1(16-15), W-3(16-17)이 위시 번호 단계에서 실패하는 출력을 "B1 바꾸기 전 실패 출력"에 붙인다. W-2, W-4, W-5는 처음부터 통과한다.
@@ -175,7 +179,7 @@ tech-spec 11장대로 한다.
 - R2로 밀린 `OrderService.java` 줄 번호를 맞춘다.
 - 07 OrderNotificationRelay의 catch 주석('주문 응답(201)에는 새어 나가지 않게 한다')의 이유를 ADR 0003 정정에 맞춘다.
 - 이 파일에 끝 표시를 한다.
-- 바꾸는 파일: `AGENTS.md`, `docs/open-questions.md`, `docs/work/05-service-layer/tasks.md`, `docs/user-stories.md`, `src/main/java/gift/order/OrderNotificationRelay.java`(주석만), 이 파일
+- 바꾸는 파일: `AGENTS.md`, `docs/open-questions.md`, `docs/work/05-service-layer/tasks.md`, `docs/user-stories.md`, `docs/work/02-acceptance-test/test-strategy.md`, `src/main/java/gift/order/OrderNotificationRelay.java`(주석만), 이 파일
 - 확인 명령: 없음(문서만)
 - 커밋 메시지 예: `docs: 위시 정리 결과를 문서에 반영 (ADR 0003)`
 
