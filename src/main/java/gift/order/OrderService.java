@@ -72,7 +72,8 @@ public class OrderService {
         }
         try {
             var product = option.getProduct();
-            kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, product);
+            var templateObject = OrderNotificationMessage.build(order, product);
+            kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), templateObject);
         } catch (Exception ignored) {
         }
     }
