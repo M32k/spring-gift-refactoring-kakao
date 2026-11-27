@@ -11,6 +11,7 @@ import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -64,6 +65,18 @@ public class OrderNotificationSteps {
     @Given("^카카오 발송이 항상 실패한다$")
     public void failAlways() {
         sender.failAlways();
+    }
+
+    // 커밋 직후 발송 중에 앱이 꺼져 시도 0번으로 남은 알림을 DB로 만든다(tech-spec 7장).
+    // 만든 시각은 앱과 같은 JVM 시계로 정한다(OrderNotification은 LocalDateTime.now()로 기록한다).
+    @Given("^응답의 주문 알림을 시도 0번 \"보낼 것\", 만든 시각 (\\d+)분 전으로 바꾼다$")
+    public void makeUnattemptedPending(int minutesAgo) {
+        int updated = jdbcTemplate.update(
+                "update order_notification set status = 'PENDING', attempt_count = 0, last_error = null,"
+                        + " sent_at = null, created_at = ? where order_id = ?",
+                LocalDateTime.now().minusMinutes(minutesAgo),
+                responseOrderId());
+        assertThat(updated).isEqualTo(1);
     }
 
     // 테스트에서는 주기 실행을 기다리지 않고 재시도 작업을 직접 부른다(tech-spec 7장).
