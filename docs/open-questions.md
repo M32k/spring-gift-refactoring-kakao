@@ -339,6 +339,18 @@
 - **이유가 코드에 있는지**: 없음. 예시 값을 기본값으로 둔 이유를 설명하는 주석이 없다. `KAKAO_CLIENT_ID`와 `KAKAO_CLIENT_SECRET`은 기본값이 비어 있는데, `JWT_SECRET`만 기본값이 들어 있다.
 - **상태**: 미결정
 
+### 29. 주문 금액이 int로 계산돼 넘친다
+
+- **작동**: 주문 금액(상품 가격 × 주문 수량)을 int로 곱한다. 결과가 int 최댓값(2,147,483,647)을 넘으면 넘친 값이 금액이 된다.
+  - 예: 맥북(3,360,000원)을 1,279개 주문하면 4,297,440,000원이어야 하지만 2,472,704원이 된다(4,297,440,000 − 4,294,967,296).
+  - 그래서 user1(포인트 5,000,000)의 주문이 201로 성공하고, 포인트는 2,472,704만 줄어 2,527,296이 된다. 주문 알림 문구의 금액도 "2,472,704원"이다.
+- **확인한 방법**: 코드 읽기와 인수 테스트(재고 2000인 옵션을 API로 만들어 1,279개 주문)
+  - 포인트 차감 금액: `option.getProduct().getPrice() * request.quantity()`(`src/main/java/gift/order/OrderService.java:61`)
+  - 알림 문구 금액: `product.getPrice() * order.getQuantity()`(`src/main/java/gift/order/OrderNotificationMessage.java:10`)
+- **이유가 코드에 있는지**: 없음. 가격(`Product.price`), 주문 수량, 포인트(`Member.point`)가 모두 int이고, 곱셈의 넘침을 확인하는 코드가 없다. 금액이 음수로 넘치면 `deductPoint`의 "차감 금액은 1 이상이어야 합니다." 예외로 500이 된다(`src/main/java/gift/member/Member.java:57-59`).
+- **인수 테스트**: `src/test/resources/features/order.feature` 16-20(201, 포인트 2,527,296, 재고 721), 단위 `src/test/java/gift/order/OrderNotificationMessageTest.java`("2,472,704원")
+- **상태**: 4단계에서는 고치지 않음(구조 변경 작업인 [`docs/work/09-domain-responsibility/tech-spec.md`](work/09-domain-responsibility/tech-spec.md)에서 지금 작동으로 고정함)
+
 > 8번, 14번은 요청으로 확인해서 A 섹션으로 옮겼다.
 
 ---

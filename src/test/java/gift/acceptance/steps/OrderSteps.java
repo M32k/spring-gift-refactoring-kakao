@@ -34,6 +34,22 @@ public class OrderSteps {
         assertThat(stock).as("상품 %d의 옵션 %d 재고", productId, optionId).isEqualTo(expected);
     }
 
+    // 새로 등록한 옵션은 번호를 미리 정하지 않는다. 등록 응답의 번호를 기억해 두고 쓴다.
+    @Then("^응답의 옵션을 등록한 옵션으로 기억한다$")
+    public void rememberRegisteredOption() {
+        context.rememberRegisteredOption(context.lastResponse().jsonPath().getLong("id"));
+    }
+
+    @Given("^상품 (\\d+)의 등록한 옵션 재고는 (?:그대로 )?(\\d+)(?:이다|다)$")
+    public void registeredOptionStockIs(long productId, int expected) {
+        stockIs(productId, Math.toIntExact(context.registeredOptionId()), expected);
+    }
+
+    @When("^(user1|user2)(?:이|가) 등록한 옵션을 주문 수량 (\\d+)(?:으로|로) 주문한다$")
+    public void orderRegisteredOption(String member, int quantity) {
+        placeOrder(member, Map.of("optionId", context.registeredOptionId(), "quantity", quantity));
+    }
+
     @Given("^(user1|user2)의 주문 내역은 (?:그대로 )?(\\d+)건이다$")
     public void orderCountIs(String member, int expected) {
         int total = given().header("Authorization", context.authorizationOf(member))
