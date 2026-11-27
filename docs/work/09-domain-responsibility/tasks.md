@@ -182,6 +182,7 @@ expected: ["옵션 이름은 필수입니다."]
 - `./gradlew build` 성공(2026-11-27): spotlessCheck 통과. 인수 테스트 81개, ArchUnit 3개, ProductNameValidatorTest 12개, OptionNameValidatorTest 7개, KakaoMessageClientTest 3개, OrderNotificationMessageTest 1개 모두 통과.
 
 ### D. 문서 정리
+끝: 79cf6c8 docs: 도메인 책임 되찾기 결과를 문서에 반영
 
 - `open-questions.md` 2번, 29번: 금액 계산 근거를 `Product.totalPrice`로 맞춘다.
 - R1, R2로 밀린 `파일:줄`을 맞춘다.
