@@ -225,3 +225,105 @@ AGENTS.md에는 저장소를 읽어서 알 수 없는 것과 다시 찾는 데 �
 - plan mode로 계획을 먼저 받고, manual mode로 파일 수정마다 승인했다.
 - git, 테스트 실행, curl은 내가 했다. AI가 커밋할 수 없어서, 모든 변경이 diff 검토를 거쳤다.
 - 포맷 검사와 ArchUnit을 빌드와 테스트에 묶어, 범위 밖 변경이나 계층 위반이 생기면 바로 실패하게 했다.
+
+## 4단계 AI 활용 기록
+
+### 1. AI에게 맡긴 일과 내가 직접 확인한 일
+
+**AI 도구**
+
+- **Claude 채팅**: 작업 순서를 잡고, Claude Code에 보낼 요청을 만들고, 계획과 결과를 검토했다.
+- **Claude Code**(plan mode, manual mode): tech-spec, tasks.md, 코드, 테스트, ADR, 문서를 고쳤다. 08 R1부터는 요청하면 `./gradlew build`를 돌려 결과를 보여 주게 했다. git은 내가 했다.
+
+| 작업 | AI에게 맡긴 일 | 내가 직접 확인한 일 | 근거 |
+|---|---|---|---|
+| 06 주문 트랜잭션 | tech-spec, tasks.md, 16-2 기대값 고치기, `createOrder`에 `@Transactional`, ADR 0001 | 16-2가 코드를 바꾸기 전에 재고 단계에서 실패하는 것을 봄. 바꾼 뒤 같은 요청을 curl로 보내 500, 재고 10 그대로를 확인함 | `docs/work/06-order-transaction/tasks.md`, `docs/adr/0001-order-transaction-boundary.md` |
+| 07 주문 알림 아웃박스 | 발송 요청 고정 테스트(C0), 구조 변경 R1~R3, 가짜 발송기, 아웃박스 저장과 커밋 뒤 발송(B1), 재시도(B2), ADR 0002 | 커밋 직후 발송 방식(같은 스레드)과 재시도 대상 조건(시도 0번 + 1분)을 정함. B1, B2 실패 출력과 일부러 틀린 결과를 봄 | `docs/work/07-order-notification-outbox/`, `docs/adr/0002-order-notification-outbox.md` |
+| 08 위시 정리 | 이벤트와 실패 만들기 방법 비교, `WishCleaner`, `OrderPlacedEvent`, 감싸개, 리스너와 실행 빈, ADR 0003 | Claude Code·Claude 채팅 추천을 보고 이벤트(B)와 실패 만들기(가)를 고름. 리스너에 대한 Claude Code 설명은 Claude 채팅이 spring-tx 소스로 확인한 정정을 받아들임 | `docs/work/08-wish-cleanup/`, `docs/adr/0003-wish-cleanup-after-order-commit.md` |
+| 09 도메인 책임 되찾기 | 금액 자리와 이름 검증 방법 비교, 특성화 테스트, `Product.totalPrice`, `NameRule`, ADR 0004·0005 | Claude 채팅이 계산한 넘침 수량 1,279개를 고름. ADR을 둘로 나누기, 일부러 틀리기를 `src/main` 메시지 한 글자로 하기도 Claude 채팅 제안을 고름 | `docs/work/09-domain-responsibility/`, `docs/adr/0004-order-total-price-in-product.md`, `docs/adr/0005-name-rule-in-product.md` |
+| AGENTS.md 정리 | 4단계 규칙, 문서 위치, 사실과 다른 줄 후보 찾기 | 후보 9개를 하나씩 정함. 연습 브랜치 줄은 Claude 채팅이 `git branch -a`로 확인했고, 나는 지울지 정함 | `AGENTS.md`, 커밋 `1666b5e` |
+
+**작동 변경 전 실패한 테스트 출력** (전체는 각 tasks.md 칸)
+
+| 작업 | 실패한 시나리오 | 핵심 줄 | 요약 | 전체 |
+|---|---|---|---|---|
+| 06 T1 | 16-2 포인트가 부족하면 500이 오고 아무것도 바뀌지 않는다 | `[상품 1의 옵션 1 재고] expected: 10 but was: 9` | 68개 중 1개 실패 | [06 tasks.md "T1 실패 출력"](docs/work/06-order-transaction/tasks.md) |
+| 07 B1 | 16-8, 16-9 | `[응답의 주문 알림 수] expected: 1 but was: 0` | 72개 중 2개 실패. 아웃박스가 없어 알림이 0건 | [07 tasks.md "B1 실패 출력"](docs/work/07-order-notification-outbox/tasks.md) |
+| 07 B2 | 16-9, 16-12 | `[주문 알림 상태] expected: "SENT" / "FAILED" but was: "PENDING"` | 73개 중 2개 실패. 빈 재시도라 "보낼 것"으로 남음 | [07 tasks.md "B2 실패 출력"](docs/work/07-order-notification-outbox/tasks.md) |
+| 08 B1 | 16-15, 16-17 | `Expecting actual: [1, 2] to contain exactly: [1]` / `[1, 2, 5]` → `[1, 2]` | 80개 중 2개 실패. 리스너가 없어 위시가 남음 | [08 tasks.md "B1 바꾸기 전 실패 출력"](docs/work/08-wish-cleanup/tasks.md) |
+
+**일부러 틀린 결과** (코드보다 늦게 쓴 테스트, 특성화 테스트가 실제로 검사하는지)
+
+| 작업 | 바꾼 것 | 핵심 줄 | 요약 | 전체 |
+|---|---|---|---|---|
+| 07 B3 | 16-14의 "만든 시각 0분 전"을 "2분 전"으로 | `[주문 알림 상태] expected: "PENDING" but was: "SENT"` | 75개 중 1개 실패 | [07 tasks.md "B3 일부러 틀린 결과"](docs/work/07-order-notification-outbox/tasks.md) |
+| 08 W-5 | 16-19에서 "위시 정리가 실패한다" 줄을 뺌 | `Expecting actual: [1] to contain exactly: [1, 2]` | 80개 중 1개 실패. warn 로그 0건 | [08 tasks.md "W-5 일부러 틀린 결과"](docs/work/08-wish-cleanup/tasks.md) |
+| 09 T1 | 16-20 포인트 기대값 1 차이, 알림 문구 금액 1원 차이 | `expected: 2527297 but was: 2527296`, `금액: 2,472,705원` vs `2,472,704원` | 두 테스트 모두 실패 | [09 tasks.md "T1 일부러 틀린 결과"](docs/work/09-domain-responsibility/tasks.md) |
+| 09 T2 | `src/main` 메시지 두 개에서 마침표 하나씩 뺌 | `expected: ["옵션 이름은 필수입니다."] but was: ["옵션 이름은 필수입니다"]` | 19개 중 6개 실패 | [09 tasks.md "T2 일부러 틀린 결과"](docs/work/09-domain-responsibility/tasks.md) |
+
+### 2. 사용한 프롬프트와 접근 방법
+
+- **규칙을 먼저 문서로**: AGENTS.md에 "4단계 작업 규칙"을 더하고 시작했다. 작업마다 tech-spec을 먼저 쓰고, 바뀌지 않아야 할 작동마다 지키는 테스트를 붙이고, 트레이드오프가 있는 결정은 ADR로 남긴다.
+- **테스트를 먼저 고치고 실패를 남기기**: 바꿀 작동의 테스트를 먼저 고치고, 코드를 바꾸기 전에 실패하는 출력을 tasks.md에 붙인 뒤에야 코드를 바꾸게 했다.
+  > B1의 "테스트 먼저"만 해 줘. 리스너, ADR, src/main은 아직 만들지 마.
+- **비교표를 받고 내가 고르기**: 선택지가 있는 곳은 AI에게 비교만 시키고 결정은 내가 했다.
+  > REQUIRES_NEW를 어느 빈의 어느 메서드에 붙일지는 코드에 넣기 전에 이유와 함께 먼저 알려 줘.
+- **구조 변경 전에 특성화 테스트**: 테스트가 없는 작동(알림 요청 모양, 금액 넘침, 이름 검증 메시지 전체)은 리팩터링 전에 지금 코드에서 통과하는 테스트로 고정했다.
+- **상태를 다시 조회**: 응답 코드만 보지 않고 재고, 포인트(DB), 위시 목록, 알림 상태(DB)를 다시 조회하게 했다.
+- **코드에 넣기 전에 묻기**: 트랜잭션 위치처럼 이유가 필요한 결정은 "코드에 넣기 전에 이유와 함께 먼저 알려 줘"라고 적었다.
+- **`파일:줄`은 쓴 뒤 대조**: 문서를 고칠 때마다 참조를 지금 코드와 대조한 표를 받았다.
+
+### 3. AI가 정리한 내용 중 실제 요청이나 확인으로 고친 것
+
+**받아들인 AI 제안**
+
+| 제안 | 누가 | 결정 | 근거 |
+|---|---|---|---|
+| 08 위시 정리용 새 이벤트 `OrderPlacedEvent`(B). 알림 이벤트는 토큰 있는 회원에게만 발행돼서 | Claude Code(Claude 채팅 검토) | 받아들임 | 08 tech-spec 4장 "결정: B", 커밋 `e4e420b` |
+| 08 실패 만들기 "가": `WishCleaner` 인터페이스와 테스트 `@Primary` 감싸개 | Claude Code(Claude 채팅 검토) | 받아들임. 스파이는 저장소 프록시를 감싸 깨지기 쉽고, 트리거는 H2에 묶여서 | 08 tech-spec 5장 "결정: 가", 커밋 `ac0f694`, `66814a7` |
+| 08 리스너와 `REQUIRES_NEW` 실행 빈 나누기(07 Relay/Dispatcher와 같은 구조) | Claude Code | 받아들임 | 08 tasks.md "B1 한 일", 커밋 `27b1b7e` |
+| 09 주문 금액 자리 `Product.totalPrice` | Claude Code | 받아들임 | 09 tech-spec 1-2, ADR 0004, 커밋 `dced891` |
+| 09 이름 검증 공통 클래스를 `gift.product`에 | Claude Code | 받아들임. 메시지 한 글자도 바꾸지 않기, 카카오 검사 건너뛰기는 조건으로 판단하기를 덧붙임 | 09 tech-spec 2-3, ADR 0005, 커밋 `57ee333` |
+
+**거절하거나 고친 AI 제안**
+
+| 제안 | 누가 냄 / 누가 지적 | 결정 | 근거 |
+|---|---|---|---|
+| "리스너 메서드에 `REQUIRES_NEW`를 붙이면 커밋 때 예외로 응답이 500이 된다" | Claude Code 설명 / Claude 채팅이 지적 | 고침. AFTER_COMMIT 리스너 예외는 Spring이 afterCompletion에서 삼켜 201 그대로다. 빈을 나누는 이유를 "우리 catch로 warn 로그를 남기려고, 같은 빈 호출은 프록시를 안 거쳐서"로 바꿔 적음 | 08 tasks.md "B1 한 일", 08 tech-spec 4장, ADR 0003 결정 |
+| 09 넘침 인수 테스트를 640개 주문으로 | Claude Code 선택지 / Claude 채팅이 계산해 1,279개 제안 | 거절. 640개는 넘치지 않아도 포인트 부족으로 500이라 넘침을 구별하지 못함. 넘친 값이 포인트 안에 들어오는 1,279개로 | 09 tech-spec 1-3, `order.feature` 16-20 |
+| 09 "ADR을 남기지 않는다" | Claude Code / Claude 채팅이 AGENTS.md:49로 지적 | 거절. AGENTS.md 규칙에 맞춰 0004·0005 두 개로 나눔. 하나로 묶어 R2에 넣으면 R1의 코드 주석이 아직 없는 ADR을 가리켜서 | 09 tech-spec "ADR 판단", 커밋 `dced891`, `57ee333` |
+| 09 T2 일부러 틀리기를 테스트 기대값으로 | Claude Code가 테스트 기대값 제안 / Claude 채팅이 `src/main` 제안 | 고침. `src/main` 메시지에서 마침표 하나를 빼서 R2에서 날 실수를 흉내 냄 | 09 tasks.md "T2 일부러 틀린 결과" |
+| 08 R1에서 `WishRepository` 주석이 아직 없는 ADR 0003을 가리킴 | Claude Code / Claude 채팅이 diff로 확인 | 고침. tech-spec 2장을 가리키게 함 | `WishRepository.java` 주석, 커밋 `ac0f694` |
+| 08 파생 delete가 돌려주는 지운 개수(long)를 리스너 로그에 쓰기 | Claude 채팅이 낸 제안 / Claude Code가 `void clean`으로는 받을 수 없다고 지적 | 거절. tech-spec이 정한 로그는 실패 warn 하나이고 확인은 위시 목록 API로 해서, `clean`은 `void` 그대로 | 08 tasks.md "R1 한 일" |
+| 08 D 커밋 파일 목록에 ADR 0003을 넣음 | Claude Code / Claude 채팅이 `git show`로 확인 | 고침. ADR 0003은 B1 커밋에 들어가 있었고 D에서 바뀐 파일은 8개 | 커밋 `07c3286`(8개 파일), `27b1b7e` |
+
+AI가 처음 낸 제안 중 일부는 커밋 전에 고쳐져 저장소에 남지 않았다. 근거 칸은 최종 결정이 남은 곳이다.
+
+### 4. AI에게 맡긴 변경과 직접 한 변경
+
+- **Claude Code에 맡긴 변경**: `src/main`, `src/test`, 문서, ADR은 Claude Code가 고쳤다. 한 번에 tasks.md의 한 항목만, 계획을 먼저 받은 뒤 고치게 했다.
+- **내가 직접 한 변경**
+  - 커밋·되돌리기는 내가 했다. Claude 채팅은 검토를 위해 git status·diff·log·show·branch를 읽기 전용으로 실행했고, Claude Code는 끝 표시 해시와 이 README 재료를 위해 git log·git show --stat만 읽었다.
+  - 실패 출력 받기, 일부러 틀리기, 커밋 전 빌드(06~09)
+  - 06 T2 뒤 curl로 포인트 부족 주문이 500이고 재고가 그대로인지 확인함
+
+**실수와 반복**
+
+| 일 | 알아챈 방법 | 고친 방법 |
+|---|---|---|
+| 07 B2를 포맷 확인 없이 커밋해서 `style:` 커밋(`c24903a`)을 따로 만듦. 그 뒤에도 spotlessCheck 실패가 여러 번 남(08 R2, 09 T2) | 빌드 실패 | 커밋 전에 `./gradlew build`를 돌리는 규칙을 AGENTS.md에 적음 |
+| 일부러 틀린 출력을 남기기 전에 다시 빌드해서 결과 파일이 덮어써짐 | 결과 파일 확인 | 틀린 결과는 `build/` 안에 따로 복사해 두고 바로 tasks.md에 붙임(AGENTS.md) |
+| 09 R2에서 두 Validator를 읽지 않고 써서 쓰기가 거절됨. 그 상태로 돈 첫 빌드는 바뀌지 않은 코드를 검사한 것이라 의미가 없었음 | AI가 결과를 보고 알림 | 두 파일을 읽고 다시 쓴 뒤 빌드를 다시 돌림. 09 tasks.md에는 다시 돌린 결과만 적음 |
+
+### 5. AI가 요청 밖에서 바꾸려 한 것과 멈추거나 되돌린 방법
+
+| AI가 요청 밖에서 한 것 | 알아챈 방법 | 멈추거나 되돌린 방법 |
+|---|---|---|
+| 08 B1을 하면서 07 `OrderNotificationRelay` 주석의 이유("주문 응답(201)에는 새어 나가지 않게 한다")도 틀렸다는 것을 발견 | AI가 먼저 알림 | 바로 고치지 않고 08 D 목록에 넣은 뒤 D에서 주석만 고침 |
+| 08 D에서 요청 목록 밖인 `test-strategy.md:115`의 줄 번호도 밀린 것을 발견 | AI가 먼저 알림 | 고치지 않고 알렸고, 내가 넣기로 정한 뒤 D에서 고침 |
+| 08 D에서 05 tasks.md "작동 변경 후보" 표에 칸을 하나 더 만듦(열이 다섯 개) | AI가 결과를 확인하다 발견 | 같은 작업 안에서 바로 마지막 칸 안으로 옮김 |
+
+**미리 막은 장치**
+- AGENTS.md "4단계 작업 규칙": tech-spec에 적은 작업에서만 `@Transactional`을 더하고, ArchUnit 규칙은 고치지 않으며, 예외를 삼키는 코드를 새로 만들지 않는다.
+- 결정이 필요한 곳은 "코드에 넣기 전에 물어봐"를 요청에 적었다.
+- git은 내가 했다. AI가 커밋할 수 없어서 모든 변경이 diff 검토를 거쳤다.
