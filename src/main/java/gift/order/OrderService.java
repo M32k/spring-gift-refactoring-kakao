@@ -5,6 +5,7 @@ import gift.member.MemberRepository;
 import gift.option.Option;
 import gift.option.OptionRepository;
 import java.util.Optional;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -15,17 +16,20 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OptionRepository optionRepository;
     private final MemberRepository memberRepository;
-    private final OrderNotificationSender orderNotificationSender;
+    private final OrderNotificationRepository orderNotificationRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public OrderService(
             OrderRepository orderRepository,
             OptionRepository optionRepository,
             MemberRepository memberRepository,
-            OrderNotificationSender orderNotificationSender) {
+            OrderNotificationRepository orderNotificationRepository,
+            ApplicationEventPublisher eventPublisher) {
         this.orderRepository = orderRepository;
         this.optionRepository = optionRepository;
         this.memberRepository = memberRepository;
-        this.orderNotificationSender = orderNotificationSender;
+        this.orderNotificationRepository = orderNotificationRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     public Page<OrderResponse> findOrders(Long memberId, Pageable pageable) {
@@ -61,20 +65,18 @@ public class OrderService {
         // save order
         var saved = orderRepository.save(new Order(option, member.getId(), request.quantity(), request.message()));
 
-        // best-effort kakao notification
-        sendOrderNotificationIfPossible(member, saved, option);
+        // ADR 0002: 주문 알림을 같은 트랜잭션에 저장하고, 커밋 뒤 OrderNotificationRelay가 보낸다.
+        saveOrderNotificationIfPossible(member, saved, option);
         return Optional.of(saved);
     }
 
-    private void sendOrderNotificationIfPossible(Member member, Order order, Option option) {
+    private void saveOrderNotificationIfPossible(Member member, Order order, Option option) {
         if (member.getKakaoAccessToken() == null) {
             return;
         }
-        try {
-            var product = option.getProduct();
-            var templateObject = OrderNotificationMessage.build(order, product);
-            orderNotificationSender.send(member.getKakaoAccessToken(), templateObject);
-        } catch (Exception ignored) {
-        }
+        var templateObject = OrderNotificationMessage.build(order, option.getProduct());
+        var notification =
+                orderNotificationRepository.save(new OrderNotification(order.getId(), member.getId(), templateObject));
+        eventPublisher.publishEvent(new OrderNotificationCreatedEvent(notification.getId()));
     }
 }

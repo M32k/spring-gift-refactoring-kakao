@@ -98,9 +98,29 @@
 
 #### B1 실패 출력
 
+- 날짜: 2026-11-27, 코드를 바꾸기 전
+- 명령: `./gradlew test --tests 'gift.acceptance.CucumberTest' --rerun-tasks`
+
 ```
-(사용자가 붙인다)
+CucumberTest > Cucumber > 16. 회원이 주문하면 카카오 주문 알림을 보낸다 > gift.acceptance.CucumberTest.16-8. 카카오 액세스 토큰이 있는 회원이 주문하면 알림이 "보냄"이 된다 FAILED
+    org.opentest4j.AssertionFailedError at OrderNotificationSteps.java:75
+
+CucumberTest > Cucumber > 16. 회원이 주문하면 카카오 주문 알림을 보낸다 > gift.acceptance.CucumberTest.16-9. 알림 발송이 실패해도 주문은 201이고 알림은 "보낼 것"으로 남는다 FAILED
+    org.opentest4j.AssertionFailedError at OrderNotificationSteps.java:75
+
+72 tests completed, 2 failed
 ```
+
+테스트 결과 파일의 실패 메시지(두 시나리오 같음):
+
+```
+org.opentest4j.AssertionFailedError: [응답의 주문 알림 수]
+expected: 1
+ but was: 0
+    at gift.acceptance.steps.OrderNotificationSteps.notificationCountOfResponseOrder(OrderNotificationSteps.java:75)
+```
+
+해석: 16-8, 16-9만 "응답의 주문 알림은 1건이다"에서 실패했다. 지금 코드에는 아웃박스가 없어서 알림이 0건이다. 16-10, 16-11(알림이 생기지 않아야 하는 경우)은 처음부터 통과했다.
 
 ### B2. 주기 재시도와 5번 제한
 

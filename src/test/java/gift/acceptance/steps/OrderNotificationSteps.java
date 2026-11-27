@@ -106,9 +106,10 @@ public class OrderNotificationSteps {
         assertThat(lastReceived().kakaoAccessToken()).isEqualTo(expected);
     }
 
+    // 문구는 Java text block이라 마지막에 줄바꿈이 있고, Gherkin DocString에는 마지막 줄바꿈이 없어서 붙여 비교한다.
     @Then("^카카오 발송기가 마지막으로 받은 문구는 다음과 같다:$")
     public void lastReceivedMessage(String expected) {
-        assertThat(lastReceived().message()).isEqualTo(expected);
+        assertThat(lastReceived().message()).isEqualTo(expected + "\n");
     }
 
     private Received lastReceived() {
