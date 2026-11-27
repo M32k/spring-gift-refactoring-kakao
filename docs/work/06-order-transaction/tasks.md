@@ -19,6 +19,7 @@
 ---
 
 ### T1. 16-2를 바뀐 작동으로 고친다 (테스트만, 커밋하지 않음)
+끝: 69a45bd fix: 포인트가 부족한 주문에서 재고도 되돌림 (ADR 0001) (T2와 함께 커밋)
 
 - `order.feature` 16-2
   - 시나리오 이름: `16-2. 포인트가 부족하면 500이 오지만 재고는 줄어든 채 남는다 (open-questions 3번)` → `16-2. 포인트가 부족하면 500이 오고 아무것도 바뀌지 않는다 (open-questions 3번)`
@@ -54,6 +55,7 @@ expected: 10
 해석: 16-2만 재고 단계에서 실패했다. 500 응답은 통과했고, 재고를 다시 조회하는 단계가 지금 작동(재고가 줄어든 채 남음)을 잡았다. 나머지 67개는 통과.
 
 ### T2. createOrder에 @Transactional을 붙여 16-2를 통과시킨다
+끝: 69a45bd fix: 포인트가 부족한 주문에서 재고도 되돌림 (ADR 0001) (인수 테스트와 ArchUnit 71개 통과)
 
 - `OrderService.createOrder`에 `@Transactional`을 붙인다. 바로 위에 주석 `// ADR 0001: 재고·포인트·주문 저장을 한 트랜잭션으로 묶는다. 응답 코드는 500 그대로.`를 단다.
 - 주문 알림 호출과 `catch (Exception ignored)`는 그대로 둔다(07에서 바꾼다).
@@ -108,6 +110,6 @@ expected: 10
   - 2장 표의 16-2 줄("실패했는데 재고가 줄어든 채 남는다 …")
   - 7장 표의 "버그처럼 보이는 작동" 줄("고치지 않고 지금 작동으로 고정 (16-2)")
 - 이 파일 T1, T2, T3에 끝 표시를 한다(05-service-layer tasks.md에는 하지 않는다).
-- 바꾸는 파일: `docs/open-questions.md`, `docs/user-stories.md`, `docs/work/02-acceptance-test/test-strategy.md`, `docs/work/06-order-transaction/tasks.md`
+- 바꾸는 파일: `docs/open-questions.md`, `docs/user-stories.md`, `docs/work/02-acceptance-test/test-strategy.md`, `docs/work/06-order-transaction/tasks.md`, `AGENTS.md`(T2로 밀린 줄 번호)
 - 확인 명령: 위 curl(사용자가 실행)
 - 커밋 메시지 예: `docs: 주문 트랜잭션 결과를 문서에 반영`
