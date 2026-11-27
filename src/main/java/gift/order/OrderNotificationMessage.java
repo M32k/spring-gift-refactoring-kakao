@@ -7,7 +7,7 @@ public final class OrderNotificationMessage {
     private OrderNotificationMessage() {}
 
     public static String build(Order order, Product product) {
-        var totalPrice = String.format("%,d", product.getPrice() * order.getQuantity());
+        var totalPrice = String.format("%,d", product.totalPrice(order.getQuantity()));
         var orderMessageLine =
                 order.getMessage() != null && !order.getMessage().isBlank() ? "\\n\\n💌 " + order.getMessage() : "";
         return """

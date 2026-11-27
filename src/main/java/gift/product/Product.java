@@ -58,6 +58,11 @@ public class Product {
         return price;
     }
 
+    // 주문 금액 = 상품 가격 × 주문 수량. int 곱셈이라 넘친다. 알면서 유지한다(ADR 0004, open-questions 29번).
+    public int totalPrice(int quantity) {
+        return price * quantity;
+    }
+
     public String getImageUrl() {
         return imageUrl;
     }

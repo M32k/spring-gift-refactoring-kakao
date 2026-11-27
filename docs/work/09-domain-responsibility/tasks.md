@@ -89,6 +89,17 @@ expected: ... "text": "🎁 선물이 도착했어요!\n\n맥북 (스페이스 �
 - 확인 명령: 전체
 - 커밋 메시지 예: `refactor: 주문 금액 계산을 Product.totalPrice로 옮김 (ADR 0004)`
 
+#### R1 한 일
+
+- `Product.totalPrice(int quantity)`를 `getPrice()` 바로 아래에 더했다. `return price * quantity;`이고, int 곱셈 그대로다(`Math.multiplyExact`, long 안 씀). 주석: "int 곱셈이라 넘친다. 알면서 유지한다(ADR 0004, open-questions 29번)".
+- `OrderService.java:61`은 `option.getProduct().totalPrice(request.quantity())`로, `OrderNotificationMessage.java:10`은 `product.totalPrice(order.getQuantity())`로 바꿨다. 두 파일 모두 같은 줄 안에서 바꿔서 줄 번호는 그대로다.
+- `src/main`에 `getPrice() *` 곱셈이 남은 곳은 없다.
+- `docs/adr/0004-order-total-price-in-product.md`를 0002, 0003 형식으로 썼다.
+  - 고려한 선택지: Option, Order, 넘침을 지금 고치기(`multiplyExact`/long)
+  - 결과의 생기는 문제: tech-spec ADR 표 그대로
+- 테스트는 고치지 않았다.
+- `./gradlew build` 성공(2026-11-27): spotlessCheck 통과. 인수 테스트 81개, ArchUnit 3개, KakaoMessageClientTest 3개, OrderNotificationMessageTest 1개 모두 통과.
+
 ### T2. 이름 검증 특성화 테스트 (테스트만)
 
 - `src/test/java/gift/product/ProductNameValidatorTest.java`, `src/test/java/gift/option/OptionNameValidatorTest.java`: 결과 목록 전체를 `isEqualTo`로 비교한다(tech-spec 2-4).

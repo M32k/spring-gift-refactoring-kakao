@@ -58,7 +58,7 @@ public class OrderService {
         optionRepository.save(option);
 
         // deduct points
-        var totalPrice = option.getProduct().getPrice() * request.quantity();
+        var totalPrice = option.getProduct().totalPrice(request.quantity());
         member.deductPoint(totalPrice);
         memberRepository.save(member);
 
