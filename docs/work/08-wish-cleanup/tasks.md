@@ -67,6 +67,20 @@
 - 확인 명령: 전체
 - 커밋 메시지 예: `test: 위시 정리 감싸개와 단계 정의 추가`
 
+#### T1 한 일
+
+- `src/test/java/gift/acceptance/FailableWishCleaner.java`(`@Component @Primary`, `WishCleaner` 구현)를 만들었다.
+  - 진짜 `RepositoryWishCleaner`를 생성자로 받아 평소에는 그대로 맡긴다.
+  - `failNext()`로 정해 두면 다음 `clean` 한 번은 맡기지 않고 `IllegalStateException(FAILURE_MESSAGE)`를 던진다. `FAILURE_MESSAGE = "가짜 위시 정리 실패"`.
+  - `reset()`이 있다.
+- 시나리오마다 초기화하는 방식은 07 `FakeOrderNotificationSender`와 같다. 단계 정의 클래스의 `@Before`가 `reset()`을 부른다.
+- 단계 정의는 새 파일 `src/test/java/gift/acceptance/steps/WishCleanupSteps.java`에 두었다. `@Before` 초기화와 `위시 정리가 실패한다`(Given)가 있다.
+  - 07 `OrderNotificationSteps`처럼 감싸개를 다루는 단계를 한곳에 모았다.
+  - `WishSteps`는 위시 API(목록, 담기, 삭제) 단계만 두어 13~15번 feature가 쓰는 파일을 건드리지 않았다.
+  - 위시 확인은 기존 `WishSteps`의 `위시 번호는 …다`를 그대로 쓴다.
+- feature 파일과 시나리오는 더하지 않았다. `src/main`은 그대로다.
+- `./gradlew build` 성공(2026-11-27): spotlessCheck 통과. 인수 테스트 75개, ArchUnit 3개, KakaoMessageClientTest 3개 모두 통과.
+
 ### B1. 주문 커밋 뒤 위시 정리
 
 - 테스트 먼저: `src/test/resources/features/wish-cleanup.feature`(새 파일). 16-15~16-19 = tech-spec 7장 W-1~W-5.
