@@ -15,17 +15,17 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OptionRepository optionRepository;
     private final MemberRepository memberRepository;
-    private final KakaoMessageClient kakaoMessageClient;
+    private final OrderNotificationSender orderNotificationSender;
 
     public OrderService(
             OrderRepository orderRepository,
             OptionRepository optionRepository,
             MemberRepository memberRepository,
-            KakaoMessageClient kakaoMessageClient) {
+            OrderNotificationSender orderNotificationSender) {
         this.orderRepository = orderRepository;
         this.optionRepository = optionRepository;
         this.memberRepository = memberRepository;
-        this.kakaoMessageClient = kakaoMessageClient;
+        this.orderNotificationSender = orderNotificationSender;
     }
 
     public Page<OrderResponse> findOrders(Long memberId, Pageable pageable) {
@@ -73,7 +73,7 @@ public class OrderService {
         try {
             var product = option.getProduct();
             var templateObject = OrderNotificationMessage.build(order, product);
-            kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), templateObject);
+            orderNotificationSender.send(member.getKakaoAccessToken(), templateObject);
         } catch (Exception ignored) {
         }
     }

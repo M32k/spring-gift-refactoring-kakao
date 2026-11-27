@@ -5,14 +5,16 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestClient;
 
 @Component
-public class KakaoMessageClient {
+public class KakaoMessageClient implements OrderNotificationSender {
     private final RestClient restClient;
 
     public KakaoMessageClient(RestClient.Builder builder) {
         this.restClient = builder.build();
     }
 
-    public void sendToMe(String kakaoAccessToken, String templateObject) {
+    // 카카오톡 "나에게 보내기" API로 보낸다.
+    @Override
+    public void send(String kakaoAccessToken, String templateObject) {
         var params = new LinkedMultiValueMap<String, String>();
         params.add("template_object", templateObject);
 

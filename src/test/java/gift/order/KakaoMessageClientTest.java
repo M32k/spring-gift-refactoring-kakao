@@ -17,7 +17,7 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
 /**
- * KakaoMessageClient.sendToMe가 카카오로 보내는 요청(주소, 헤더, template_object)을 지금 그대로 고정한다.
+ * KakaoMessageClient.send가 카카오로 보내는 요청(주소, 헤더, template_object)을 지금 그대로 고정한다.
  * 초기 데이터 회원에게는 카카오 액세스 토큰이 없어서 인수 테스트가 이 코드를 지나지 않는다.
  * docs/work/07-order-notification-outbox/tasks.md C0 참고.
  */
@@ -65,7 +65,7 @@ class KakaoMessageClientTest {
     void 주문_메시지가_있으면_문구_끝에_주문_메시지가_붙는다() {
         expectRequest(TEMPLATE_WITH_MESSAGE);
 
-        kakaoMessageClient.sendToMe(
+        kakaoMessageClient.send(
                 KAKAO_ACCESS_TOKEN, OrderNotificationMessage.build(new Order(option, 2L, 2, "생일 축하해"), product));
 
         server.verify();
@@ -75,7 +75,7 @@ class KakaoMessageClientTest {
     void 주문_메시지가_null이면_주문_메시지_줄이_없다() {
         expectRequest(TEMPLATE_WITHOUT_MESSAGE);
 
-        kakaoMessageClient.sendToMe(
+        kakaoMessageClient.send(
                 KAKAO_ACCESS_TOKEN, OrderNotificationMessage.build(new Order(option, 2L, 2, null), product));
 
         server.verify();
@@ -85,7 +85,7 @@ class KakaoMessageClientTest {
     void 주문_메시지가_공백뿐이면_주문_메시지_줄이_없다() {
         expectRequest(TEMPLATE_WITHOUT_MESSAGE);
 
-        kakaoMessageClient.sendToMe(
+        kakaoMessageClient.send(
                 KAKAO_ACCESS_TOKEN, OrderNotificationMessage.build(new Order(option, 2L, 2, "   "), product));
 
         server.verify();
